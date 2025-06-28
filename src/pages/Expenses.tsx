@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,37 +14,33 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   ArrowLeft, 
   Plus, 
-  FileText, 
+  Receipt, 
   Calendar,
   DollarSign,
-  User,
-  Loader2,
-  Edit,
-  Trash2,
-  Eye
+  Tag,
+  Loader2
 } from "lucide-react";
 
-interface Invoice {
+interface Expense {
   id: string;
-  client_name: string;
+  category: string;
   amount: number;
-  status: string | null; // Changed from union type to string | null to match database
-  due_date: string;
-  notes?: string;
+  date: string;
+  description?: string;
+  receipt_url?: string;
   created_at: string;
 }
 
-const Invoices = () => {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+const Expenses = () => {
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [formData, setFormData] = useState({
-    client_name: "",
+    category: "",
     amount: "",
-    due_date: "",
-    notes: "",
-    status: "Pending" as const
+    date: new Date().toISOString().split('T')[0],
+    description: ""
   });
 
   const navigate = useNavigate();
@@ -52,25 +49,25 @@ const Invoices = () => {
 
   useEffect(() => {
     if (user) {
-      loadInvoices();
+      loadExpenses();
     }
   }, [user]);
 
-  const loadInvoices = async () => {
+  const loadExpenses = async () => {
     try {
       const { data, error } = await supabase
-        .from('invoices')
+        .from('expenses')
         .select('*')
         .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+        .order('date', { ascending: false });
 
       if (error) throw error;
-      setInvoices(data || []);
+      setExpenses(data || []);
     } catch (error) {
-      console.error('Error loading invoices:', error);
+      console.error('Error loading expenses:', error);
       toast({
         title: "Error",
-        description: "Failed to load invoices",
+        description: "Failed to load expenses",
         variant: "destructive"
       });
     } finally {
@@ -78,42 +75,40 @@ const Invoices = () => {
     }
   };
 
-  const handleCreateInvoice = async (e: React.FormEvent) => {
+  const handleCreateExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
 
     try {
       const { error } = await supabase
-        .from('invoices')
+        .from('expenses')
         .insert({
           user_id: user?.id,
-          client_name: formData.client_name,
+          category: formData.category,
           amount: parseFloat(formData.amount),
-          due_date: formData.due_date,
-          notes: formData.notes,
-          status: formData.status
+          date: formData.date,
+          description: formData.description
         });
 
       if (error) throw error;
 
       toast({
-        title: "Invoice created!",
-        description: `Invoice for ${formData.client_name} has been created successfully.`
+        title: "Expense recorded!",
+        description: `₦${parseFloat(formData.amount).toLocaleString()} expense has been recorded.`
       });
 
       setFormData({
-        client_name: "",
+        category: "",
         amount: "",
-        due_date: "",
-        notes: "",
-        status: "Pending"
+        date: new Date().toISOString().split('T')[0],
+        description: ""
       });
       setShowCreateForm(false);
-      loadInvoices();
+      loadExpenses();
     } catch (error) {
-      console.error('Error creating invoice:', error);
+      console.error('Error creating expense:', error);
       toast({
-        title: "Failed to create invoice",
+        title: "Failed to record expense",
         description: "Please try again or check your connection.",
         variant: "destructive"
       });
@@ -137,21 +132,12 @@ const Invoices = () => {
     });
   };
 
-  const getStatusColor = (status: string | null) => {
-    switch (status) {
-      case 'Paid': return 'default';
-      case 'Pending': return 'secondary';
-      case 'Overdue': return 'destructive';
-      default: return 'secondary';
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="text-gray-600">Loading invoices...</span>
+          <span className="text-gray-600">Loading expenses...</span>
         </div>
       </div>
     );
@@ -186,7 +172,7 @@ const Invoices = () => {
               className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
             >
               <Plus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">New Invoice</span>
+              <span className="hidden sm:inline">Add Expense</span>
             </Button>
           </div>
         </div>
@@ -196,40 +182,46 @@ const Invoices = () => {
         {/* Page Header */}
         <div className="text-center space-y-4">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-orange-100 rounded-full flex items-center justify-center mx-auto">
-            <FileText className="h-8 w-8 text-blue-600" />
+            <Receipt className="h-8 w-8 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Invoice Management</h1>
-            <p className="text-gray-600">Create and manage your business invoices</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Expense Tracking</h1>
+            <p className="text-gray-600">Track your business expenses efficiently</p>
           </div>
         </div>
 
-        {/* Create Invoice Form */}
+        {/* Create Expense Form */}
         {showCreateForm && (
           <Card className="shadow-lg border-0">
             <CardHeader>
-              <CardTitle>Create New Invoice</CardTitle>
+              <CardTitle>Record New Expense</CardTitle>
               <CardDescription>
-                Fill in the details to create a new invoice for your client
+                Add details about your business expense
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleCreateInvoice} className="space-y-5">
+              <form onSubmit={handleCreateExpense} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <Label htmlFor="client_name" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Client Name *
+                    <Label htmlFor="category" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Tag className="h-4 w-4" />
+                      Category *
                     </Label>
-                    <Input
-                      id="client_name"
-                      type="text"
-                      placeholder="e.g., Adebayo Fashion Store"
-                      value={formData.client_name}
-                      onChange={(e) => setFormData({...formData, client_name: e.target.value})}
-                      className="h-11 text-base"
-                      required
-                    />
+                    <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Office Supplies">Office Supplies</SelectItem>
+                        <SelectItem value="Transportation">Transportation</SelectItem>
+                        <SelectItem value="Marketing">Marketing</SelectItem>
+                        <SelectItem value="Utilities">Utilities</SelectItem>
+                        <SelectItem value="Equipment">Equipment</SelectItem>
+                        <SelectItem value="Food & Entertainment">Food & Entertainment</SelectItem>
+                        <SelectItem value="Professional Services">Professional Services</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -241,7 +233,7 @@ const Invoices = () => {
                       id="amount"
                       type="number"
                       step="0.01"
-                      placeholder="e.g., 50000"
+                      placeholder="e.g., 5000"
                       value={formData.amount}
                       onChange={(e) => setFormData({...formData, amount: e.target.value})}
                       className="h-11 text-base"
@@ -250,48 +242,30 @@ const Invoices = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="due_date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Due Date *
-                    </Label>
-                    <Input
-                      id="due_date"
-                      type="date"
-                      value={formData.due_date}
-                      onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                      className="h-11 text-base"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="status" className="text-sm font-medium text-gray-700">
-                      Status
-                    </Label>
-                    <Select value={formData.status} onValueChange={(value: any) => setFormData({...formData, status: value})}>
-                      <SelectTrigger className="h-11">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="Paid">Paid</SelectItem>
-                        <SelectItem value="Overdue">Overdue</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Date *
+                  </Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    className="h-11 text-base"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="notes" className="text-sm font-medium text-gray-700">
-                    Notes (Optional)
+                  <Label htmlFor="description" className="text-sm font-medium text-gray-700">
+                    Description (Optional)
                   </Label>
                   <Textarea
-                    id="notes"
-                    placeholder="Add any additional notes about this invoice..."
-                    value={formData.notes}
-                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                    id="description"
+                    placeholder="Add any additional details about this expense..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
                     className="min-h-[100px]"
                   />
                 </div>
@@ -305,12 +279,12 @@ const Invoices = () => {
                     {creating ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating Invoice...
+                        Recording Expense...
                       </>
                     ) : (
                       <>
                         <Plus className="mr-2 h-4 w-4" />
-                        Create Invoice
+                        Record Expense
                       </>
                     )}
                   </Button>
@@ -328,11 +302,11 @@ const Invoices = () => {
           </Card>
         )}
 
-        {/* Invoices List */}
+        {/* Expenses List */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
-              Your Invoices ({invoices.length})
+              Your Expenses ({expenses.length})
             </h2>
             {!showCreateForm && (
               <Button 
@@ -340,76 +314,51 @@ const Invoices = () => {
                 className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create Invoice
+                Add Expense
               </Button>
             )}
           </div>
 
-          {invoices.length === 0 ? (
+          {expenses.length === 0 ? (
             <Card className="shadow-lg border-0">
               <CardContent className="py-12 text-center">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No invoices yet</h3>
+                <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No expenses yet</h3>
                 <p className="text-gray-600 mb-6">
-                  Create your first invoice to start managing your business payments
+                  Start tracking your business expenses to better manage your finances
                 </p>
                 <Button 
                   onClick={() => setShowCreateForm(true)}
                   className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Invoice
+                  Record Your First Expense
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {invoices.map((invoice) => (
-                <Card key={invoice.id} className="shadow-lg border-0 hover:shadow-xl transition-shadow">
+              {expenses.map((expense) => (
+                <Card key={expense.id} className="shadow-lg border-0 hover:shadow-xl transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg truncate">{invoice.client_name}</CardTitle>
-                      <Badge variant={getStatusColor(invoice.status)}>
-                        {invoice.status || 'Pending'}
+                      <CardTitle className="text-lg">{expense.category}</CardTitle>
+                      <Badge variant="secondary">
+                        {formatCurrency(expense.amount)}
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Amount:</span>
-                      <span className="font-semibold text-lg text-green-600">
-                        {formatCurrency(invoice.amount)}
-                      </span>
+                      <span className="text-gray-600">Date:</span>
+                      <span className="font-medium">{formatDate(expense.date)}</span>
                     </div>
                     
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Due Date:</span>
-                      <span className="font-medium">{formatDate(invoice.due_date)}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Created:</span>
-                      <span className="text-sm text-gray-500">{formatDate(invoice.created_at)}</span>
-                    </div>
-                    
-                    {invoice.notes && (
+                    {expense.description && (
                       <div className="pt-2 border-t">
-                        <p className="text-sm text-gray-600 truncate" title={invoice.notes}>
-                          {invoice.notes}
-                        </p>
+                        <p className="text-sm text-gray-600">{expense.description}</p>
                       </div>
                     )}
-                    
-                    <div className="flex items-center gap-2 pt-3">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -421,4 +370,4 @@ const Invoices = () => {
   );
 };
 
-export default Invoices;
+export default Expenses;
