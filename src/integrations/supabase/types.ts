@@ -168,6 +168,65 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          auto_recorded: boolean | null
+          created_at: string
+          created_by: string | null
+          customer_name: string | null
+          date: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          payment_method: string
+          transaction_id: string | null
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          auto_recorded?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          date?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          payment_method: string
+          transaction_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          auto_recorded?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          date?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          payment_method?: string
+          transaction_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referrals: {
         Row: {
           created_at: string

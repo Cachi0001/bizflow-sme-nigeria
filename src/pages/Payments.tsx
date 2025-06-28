@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,33 +14,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   ArrowLeft, 
   Plus, 
-  Receipt, 
+  CreditCard, 
   Calendar,
   DollarSign,
-  Tag,
-  Loader2
+  User,
+  Loader2,
+  Zap
 } from "lucide-react";
 
-interface Expense {
+interface Payment {
   id: string;
-  category: string;
-  amount: number;
   date: string;
   description?: string;
-  receipt_url?: string;
+  customer_name?: string;
+  amount: number;
+  transaction_id?: string;
+  payment_method: string;
+  auto_recorded: boolean;
   created_at: string;
 }
 
-const Expenses = () => {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+const Payments = () => {
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [formData, setFormData] = useState({
-    category: "",
-    amount: "",
     date: new Date().toISOString().split('T')[0],
-    description: ""
+    description: "",
+    customer_name: "",
+    amount: "",
+    payment_method: ""
   });
 
   const navigate = useNavigate();
@@ -48,25 +53,25 @@ const Expenses = () => {
 
   useEffect(() => {
     if (user) {
-      loadExpenses();
+      loadPayments();
     }
   }, [user]);
 
-  const loadExpenses = async () => {
+  const loadPayments = async () => {
     try {
       const { data, error } = await supabase
-        .from('expenses')
+        .from('payments')
         .select('*')
         .eq('user_id', user?.id)
         .order('date', { ascending: false });
 
       if (error) throw error;
-      setExpenses(data || []);
+      setPayments(data || []);
     } catch (error) {
-      console.error('Error loading expenses:', error);
+      console.error('Error loading payments:', error);
       toast({
         title: "Error",
-        description: "Failed to load expenses",
+        description: "Failed to load payments",
         variant: "destructive"
       });
     } finally {
@@ -74,40 +79,43 @@ const Expenses = () => {
     }
   };
 
-  const handleCreateExpense = async (e: React.FormEvent) => {
+  const handleCreatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
 
     try {
       const { error } = await supabase
-        .from('expenses')
+        .from('payments')
         .insert({
           user_id: user?.id,
-          category: formData.category,
-          amount: parseFloat(formData.amount),
           date: formData.date,
-          description: formData.description
+          description: formData.description || null,
+          customer_name: formData.customer_name || null,
+          amount: parseFloat(formData.amount),
+          payment_method: formData.payment_method,
+          auto_recorded: false
         });
 
       if (error) throw error;
 
       toast({
-        title: "Expense recorded!",
-        description: `₦${parseFloat(formData.amount).toLocaleString()} expense has been recorded.`
+        title: "Payment recorded!",
+        description: `₦${parseFloat(formData.amount).toLocaleString()} payment has been recorded.`
       });
 
       setFormData({
-        category: "",
-        amount: "",
         date: new Date().toISOString().split('T')[0],
-        description: ""
+        description: "",
+        customer_name: "",
+        amount: "",
+        payment_method: ""
       });
       setShowCreateForm(false);
-      loadExpenses();
+      loadPayments();
     } catch (error) {
-      console.error('Error creating expense:', error);
+      console.error('Error creating payment:', error);
       toast({
-        title: "Failed to record expense",
+        title: "Failed to record payment",
         description: "Please try again or check your connection.",
         variant: "destructive"
       });
@@ -136,7 +144,7 @@ const Expenses = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="text-gray-600">Loading expenses...</span>
+          <span className="text-gray-600">Loading payments...</span>
         </div>
       </div>
     );
@@ -171,7 +179,7 @@ const Expenses = () => {
               className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
             >
               <Plus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Add Expense</span>
+              <span className="hidden sm:inline">Record Payment</span>
             </Button>
           </div>
         </div>
@@ -181,47 +189,39 @@ const Expenses = () => {
         {/* Page Header */}
         <div className="text-center space-y-4">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-orange-100 rounded-full flex items-center justify-center mx-auto">
-            <Receipt className="h-8 w-8 text-blue-600" />
+            <CreditCard className="h-8 w-8 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Expense Tracking</h1>
-            <p className="text-gray-600">Track your business expenses efficiently</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Payment Records</h1>
+            <p className="text-gray-600">Track all your business payments and transactions</p>
           </div>
         </div>
 
-        {/* Create Expense Form */}
+        {/* Create Payment Form */}
         {showCreateForm && (
           <Card className="shadow-lg border-0">
             <CardHeader>
-              <CardTitle>Record New Expense</CardTitle>
+              <CardTitle>Record New Payment</CardTitle>
               <CardDescription>
-                Add details about your business expense
+                Manually record a payment received from a customer
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleCreateExpense} className="space-y-5">
+              <form onSubmit={handleCreatePayment} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <Label htmlFor="category" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Tag className="h-4 w-4" />
-                      Category *
+                    <Label htmlFor="date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Date *
                     </Label>
-                    <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Inventory Purchase">Inventory Purchase</SelectItem>
-                        <SelectItem value="Office Supplies">Office Supplies</SelectItem>
-                        <SelectItem value="Transportation">Transportation</SelectItem>
-                        <SelectItem value="Marketing">Marketing</SelectItem>
-                        <SelectItem value="Utilities">Utilities</SelectItem>
-                        <SelectItem value="Equipment">Equipment</SelectItem>
-                        <SelectItem value="Food & Entertainment">Food & Entertainment</SelectItem>
-                        <SelectItem value="Professional Services">Professional Services</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({...formData, date: e.target.value})}
+                      className="h-11 text-base"
+                      required
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -233,7 +233,7 @@ const Expenses = () => {
                       id="amount"
                       type="number"
                       step="0.01"
-                      placeholder="e.g., 5000"
+                      placeholder="e.g., 25000"
                       value={formData.amount}
                       onChange={(e) => setFormData({...formData, amount: e.target.value})}
                       className="h-11 text-base"
@@ -242,19 +242,38 @@ const Expenses = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Date *
-                  </Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    className="h-11 text-base"
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="customer_name" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Customer Name
+                    </Label>
+                    <Input
+                      id="customer_name"
+                      type="text"
+                      placeholder="e.g., Adebayo Fashions"
+                      value={formData.customer_name}
+                      onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
+                      className="h-11 text-base"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="payment_method" className="text-sm font-medium text-gray-700">
+                      Payment Method *
+                    </Label>
+                    <Select value={formData.payment_method} onValueChange={(value) => setFormData({...formData, payment_method: value})}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select payment method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                        <SelectItem value="Credit">Credit</SelectItem>
+                        <SelectItem value="POS">POS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -263,7 +282,7 @@ const Expenses = () => {
                   </Label>
                   <Textarea
                     id="description"
-                    placeholder="Add any additional details about this expense..."
+                    placeholder="Add any additional details about this payment..."
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
                     className="min-h-[100px]"
@@ -279,12 +298,12 @@ const Expenses = () => {
                     {creating ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Recording Expense...
+                        Recording Payment...
                       </>
                     ) : (
                       <>
                         <Plus className="mr-2 h-4 w-4" />
-                        Record Expense
+                        Record Payment
                       </>
                     )}
                   </Button>
@@ -302,11 +321,11 @@ const Expenses = () => {
           </Card>
         )}
 
-        {/* Expenses List */}
+        {/* Payments List */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
-              Your Expenses ({expenses.length})
+              Recent Payments ({payments.length})
             </h2>
             {!showCreateForm && (
               <Button 
@@ -314,49 +333,72 @@ const Expenses = () => {
                 className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Expense
+                Record Payment
               </Button>
             )}
           </div>
 
-          {expenses.length === 0 ? (
+          {payments.length === 0 ? (
             <Card className="shadow-lg border-0">
               <CardContent className="py-12 text-center">
-                <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No expenses yet</h3>
+                <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No payments yet</h3>
                 <p className="text-gray-600 mb-6">
-                  Start tracking your business expenses to better manage your finances
+                  Start recording your payments to track your business income
                 </p>
                 <Button 
                   onClick={() => setShowCreateForm(true)}
                   className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Record Your First Expense
+                  Record Your First Payment
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {expenses.map((expense) => (
-                <Card key={expense.id} className="shadow-lg border-0 hover:shadow-xl transition-shadow">
+              {payments.map((payment) => (
+                <Card key={payment.id} className="shadow-lg border-0 hover:shadow-xl transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{expense.category}</CardTitle>
-                      <Badge variant="secondary">
-                        {formatCurrency(expense.amount)}
-                      </Badge>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {payment.auto_recorded && (
+                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                            <Zap className="h-3 w-3 mr-1" />
+                            Auto
+                          </Badge>
+                        )}
+                        {formatCurrency(payment.amount)}
+                      </CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Date:</span>
-                      <span className="font-medium">{formatDate(expense.date)}</span>
+                      <span className="font-medium">{formatDate(payment.date)}</span>
                     </div>
                     
-                    {expense.description && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Method:</span>
+                      <Badge variant="outline">{payment.payment_method}</Badge>
+                    </div>
+                    
+                    {payment.customer_name && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Customer:</span>
+                        <span className="font-medium text-sm">{payment.customer_name}</span>
+                      </div>
+                    )}
+                    
+                    {payment.description && (
                       <div className="pt-2 border-t">
-                        <p className="text-sm text-gray-600">{expense.description}</p>
+                        <p className="text-sm text-gray-600">{payment.description}</p>
+                      </div>
+                    )}
+                    
+                    {payment.transaction_id && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs text-gray-500">ID: {payment.transaction_id}</p>
                       </div>
                     )}
                   </CardContent>
@@ -370,4 +412,4 @@ const Expenses = () => {
   );
 };
 
-export default Expenses;
+export default Payments;
