@@ -158,74 +158,79 @@ const Pricing = () => {
       <section className="py-8 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {Object.entries(plans).map(([key, plan]) => (
-              <Card 
-                key={key} 
-                className={`relative ${plan.popular ? 'ring-2 ring-primary scale-105 shadow-xl' : ''} ${plan.comingSoon ? 'opacity-75' : ''}`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-primary text-white px-4 py-1">
-                      Most Popular
-                    </Badge>
-                  </div>
-                )}
-                
-                <CardHeader className="text-center pb-6">
-                  <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-                  <CardDescription className="text-base">{plan.description}</CardDescription>
-                  
-                  <div className="mt-4">
-                    <div className="text-4xl font-bold text-primary">
-                      {formatPrice(plan.price[billingPeriod])}
+            {Object.entries(plans).map(([key, plan]) => {
+              const isPopular = 'popular' in plan && plan.popular;
+              const isComingSoon = 'comingSoon' in plan && plan.comingSoon;
+              
+              return (
+                <Card 
+                  key={key} 
+                  className={`relative ${isPopular ? 'ring-2 ring-primary scale-105 shadow-xl' : ''} ${isComingSoon ? 'opacity-75' : ''}`}
+                >
+                  {isPopular && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-primary text-white px-4 py-1">
+                        Most Popular
+                      </Badge>
                     </div>
-                    <div className="text-gray-600 text-sm">
-                      per {billingPeriod === 'yearly' ? 'year' : billingPeriod.slice(0, -2)}
-                    </div>
-                    {billingPeriod === 'yearly' && plan.price.yearly > 0 && (
-                      <div className="text-green-600 text-sm font-medium mt-1">
-                        Save {formatPrice(plan.price.monthly * 12 - plan.price.yearly)} annually
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-
-                <CardContent className="pt-0">
-                  <div className="space-y-3 mb-6">
-                    {plan.features.map((feature, index) => (
-                      <div key={index} className="flex items-center">
-                        {feature.included ? (
-                          <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-                        ) : (
-                          <X className="h-5 w-5 text-gray-300 mr-3 flex-shrink-0" />
-                        )}
-                        <span className={`text-sm ${feature.included ? 'text-gray-900' : 'text-gray-400'}`}>
-                          {feature.name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Button 
-                    className="w-full" 
-                    size="lg"
-                    disabled={plan.comingSoon}
-                    onClick={() => handleSubscribe(plan.name)}
-                    variant={plan.popular ? 'default' : 'outline'}
-                  >
-                    {plan.comingSoon ? 'Coming Soon' : 
-                     plan.name === 'Free Plan' ? 'Get Started Free' : 
-                     `Subscribe to ${plan.name}`}
-                  </Button>
-
-                  {plan.name === 'Silver Plan' && (
-                    <p className="text-xs text-gray-500 text-center mt-2">
-                      Billed {billingPeriod}. Cancel anytime.
-                    </p>
                   )}
-                </CardContent>
-              </Card>
-            ))}
+                  
+                  <CardHeader className="text-center pb-6">
+                    <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
+                    <CardDescription className="text-base">{plan.description}</CardDescription>
+                    
+                    <div className="mt-4">
+                      <div className="text-4xl font-bold text-primary">
+                        {formatPrice(plan.price[billingPeriod])}
+                      </div>
+                      <div className="text-gray-600 text-sm">
+                        per {billingPeriod === 'yearly' ? 'year' : billingPeriod.slice(0, -2)}
+                      </div>
+                      {billingPeriod === 'yearly' && plan.price.yearly > 0 && (
+                        <div className="text-green-600 text-sm font-medium mt-1">
+                          Save {formatPrice(plan.price.monthly * 12 - plan.price.yearly)} annually
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="pt-0">
+                    <div className="space-y-3 mb-6">
+                      {plan.features.map((feature, index) => (
+                        <div key={index} className="flex items-center">
+                          {feature.included ? (
+                            <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
+                          ) : (
+                            <X className="h-5 w-5 text-gray-300 mr-3 flex-shrink-0" />
+                          )}
+                          <span className={`text-sm ${feature.included ? 'text-gray-900' : 'text-gray-400'}`}>
+                            {feature.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      disabled={isComingSoon}
+                      onClick={() => handleSubscribe(plan.name)}
+                      variant={isPopular ? 'default' : 'outline'}
+                    >
+                      {isComingSoon ? 'Coming Soon' : 
+                       plan.name === 'Free Plan' ? 'Get Started Free' : 
+                       `Subscribe to ${plan.name}`}
+                    </Button>
+
+                    {plan.name === 'Silver Plan' && (
+                      <p className="text-xs text-gray-500 text-center mt-2">
+                        Billed {billingPeriod}. Cancel anytime.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
