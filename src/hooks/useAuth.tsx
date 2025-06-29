@@ -59,8 +59,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
-            phone: cleanPhone,
-            business_name: businessName?.trim() || ""
+            phone: phone.trim(), // Must match trigger expectation
+            business_name: businessName.trim(),
+            role: 'Owner', // Required by your schema
+            subscription_tier: 'Free' // Default value
           }
         }
       });

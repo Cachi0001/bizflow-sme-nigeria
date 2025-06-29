@@ -33,6 +33,12 @@ const Register = () => {
       return;
     }
 
+    if (!formData.phone) {
+      console.error('Phone required');
+      setLoading(false);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       console.error('Passwords do not match');
       setLoading(false);
