@@ -6,25 +6,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, Loader2, Mail } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [formData, setFormData] = useState({
     phoneOrEmail: "",
     password: ""
   });
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
-  const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const navigate = useNavigate();
   const { signIn, resetPassword } = useAuth();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    if (!formData.phoneOrEmail || !formData.password) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const { error } = await signIn(formData.phoneOrEmail, formData.password);
@@ -38,20 +42,19 @@ const Login = () => {
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetLoading(true);
 
+    if (!resetEmail) {
+      setResetLoading(false);
+      return;
+    }
+
     try {
-      const { error } = await resetPassword(resetEmail);
-      if (!error) {
-        setShowForgotPassword(false);
-        setResetEmail("");
-        toast({
-          title: "Password reset email sent",
-          description: "Check your email for reset instructions."
-        });
-      }
+      await resetPassword(resetEmail);
+      setShowForgotPassword(false);
+      setResetEmail("");
     } catch (error) {
       console.error('Password reset error:', error);
     } finally {
@@ -61,8 +64,7 @@ const Login = () => {
 
   if (showForgotPassword) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex flex-col">
-        {/* Header */}
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex flex-col">
         <header className="bg-white/80 backdrop-blur-sm shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between py-4">
@@ -72,43 +74,41 @@ const Login = () => {
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to Login
+                <span className="hidden sm:inline">Back to Login</span>
               </Button>
               
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-blue-500 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">B</span>
                 </div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">
                   Bizflow
                 </span>
               </div>
               
-              <div></div>
+              <Button variant="ghost" onClick={() => navigate('/register')}>
+                Register
+              </Button>
             </div>
           </div>
         </header>
 
-        {/* Forgot Password Form */}
         <div className="flex-1 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md shadow-xl border-0">
+          <Card className="w-full max-w-md shadow-xl border-0 bg-gradient-to-br from-green-50 to-blue-50">
             <CardHeader className="text-center space-y-4 pb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-orange-100 rounded-full flex items-center justify-center mx-auto">
-                <Mail className="h-6 w-6 text-blue-600" />
-              </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">
-                Reset Your Password
+              <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">
+                Reset Password
               </CardTitle>
               <CardDescription className="text-base text-gray-600">
-                Enter your email address and we'll send you a link to reset your password
+                Enter your email to reset your password
               </CardDescription>
             </CardHeader>
             
             <CardContent>
-              <form onSubmit={handleForgotPassword} className="space-y-5">
+              <form onSubmit={handleResetPassword} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="resetEmail" className="text-sm font-medium text-gray-700">
-                    Email Address
+                    Email Address *
                   </Label>
                   <Input
                     id="resetEmail"
@@ -123,7 +123,7 @@ const Login = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-11 text-base font-semibold bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300" 
+                  className="w-full h-11 text-base font-semibold bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300" 
                   disabled={resetLoading}
                 >
                   {resetLoading ? (
@@ -144,7 +144,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex flex-col">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -159,16 +159,16 @@ const Login = () => {
             </Button>
             
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-blue-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">B</span>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">
                 Bizflow
               </span>
             </div>
             
             <Button variant="ghost" onClick={() => navigate('/register')}>
-              Sign Up
+              Register
             </Button>
           </div>
         </div>
@@ -176,13 +176,13 @@ const Login = () => {
 
       {/* Login Form */}
       <div className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-xl border-0">
+        <Card className="w-full max-w-md shadow-xl border-0 bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader className="text-center space-y-4 pb-6">
-            <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">
               Welcome Back
             </CardTitle>
             <CardDescription className="text-base text-gray-600">
-              Sign in to your Bizflow account
+              Login to continue managing your business
             </CardDescription>
           </CardHeader>
           
@@ -190,43 +190,49 @@ const Login = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="phoneOrEmail" className="text-sm font-medium text-gray-700">
-                  Phone Number or Email
+                  Phone Number or Email *
                 </Label>
                 <Input
                   id="phoneOrEmail"
                   type="text"
-                  placeholder="08012345678 or your@email.com"
+                  placeholder="08012345678 or email@example.com"
                   value={formData.phoneOrEmail}
                   onChange={(e) => setFormData({...formData, phoneOrEmail: e.target.value})}
                   className="h-11 text-base"
                   required
                 />
-                <p className="text-xs text-gray-500">
-                  Use the phone number or email wey you register with
-                </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Password
+                  Password *
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="h-11 text-base"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    className="h-11 text-base pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center justify-end">
+              <div className="flex justify-end">
                 <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-sm text-blue-600 hover:text-blue-700"
-                  onClick={() => setShowForgotPassword(true)}
                   type="button"
+                  variant="link" 
+                  className="p-0 h-auto text-sm text-green-600 hover:text-green-700"
+                  onClick={() => setShowForgotPassword(true)}
                 >
                   Forgot Password?
                 </Button>
@@ -234,7 +240,7 @@ const Login = () => {
 
               <Button 
                 type="submit" 
-                className="w-full h-11 text-base font-semibold bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300" 
+                className="w-full h-11 text-base font-semibold bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300" 
                 disabled={loading}
               >
                 {loading ? (
@@ -252,10 +258,10 @@ const Login = () => {
                   Don't have an account?{" "}
                   <Button 
                     variant="link" 
-                    className="p-0 h-auto font-semibold text-blue-600 hover:text-blue-700"
+                    className="p-0 h-auto font-semibold text-green-600 hover:text-green-700"
                     onClick={() => navigate('/register')}
                   >
-                    Sign up here
+                    Create one here
                   </Button>
                 </p>
               </div>

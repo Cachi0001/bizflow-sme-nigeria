@@ -45,23 +45,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (phone: string, email: string, password: string, businessName?: string) => {
     try {
+      if (!email || !phone) {
+        throw new Error("Both email and phone are required");
+      }
+
       const { data, error } = await supabase.auth.signUp({
-        email: email || `${phone}@bizflow.app`, // Create email if not provided
+        email: email,
         password,
         options: {
           data: {
             phone: phone,
-            business_name: businessName
+            business_name: businessName || ""
           }
         }
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Account created successfully!",
-        description: "Welcome to Bizflow. You can now start managing your business."
-      });
+      if (data.user && !data.user.email_confirmed_at) {
+        toast({
+          title: "Check your email!",
+          description: "We sent you a confirmation link. Please check your email and click the link to activate your account."
+        });
+      } else {
+        toast({
+          title: "Account created successfully!",
+          description: "Welcome to Bizflow. You can now start managing your business."
+        });
+      }
 
       return { data, error: null };
     } catch (error: any) {
@@ -77,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (phoneOrEmail: string, password: string) => {
     try {
-      // If it's a phone number, convert to email format
+      // If it's a phone number, convert to email format for backward compatibility
       const email = phoneOrEmail.includes('@') ? phoneOrEmail : `${phoneOrEmail}@bizflow.app`;
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -126,7 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const resetPassword = async (email: string) => {
     try {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: `https://preview--bizflow-sme-nigeria.lovable.app/reset-password`
       });
 
       if (error) throw error;

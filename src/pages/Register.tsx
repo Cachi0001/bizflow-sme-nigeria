@@ -25,7 +25,7 @@ const Register = () => {
     setLoading(true);
 
     // Validation
-    if (!formData.phone || !formData.password) {
+    if (!formData.phone || !formData.email || !formData.password) {
       setLoading(false);
       return;
     }
@@ -59,7 +59,7 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex flex-col">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -74,10 +74,10 @@ const Register = () => {
             </Button>
             
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-blue-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">B</span>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">
                 Bizflow
               </span>
             </div>
@@ -91,9 +91,9 @@ const Register = () => {
 
       {/* Registration Form */}
       <div className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-xl border-0">
+        <Card className="w-full max-w-md shadow-xl border-0 bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader className="text-center space-y-4 pb-6">
-            <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">
               Create Your Account
             </CardTitle>
             <CardDescription className="text-base text-gray-600">
@@ -123,7 +123,7 @@ const Register = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email Address (Optional)
+                  Email Address *
                 </Label>
                 <Input
                   id="email"
@@ -132,9 +132,10 @@ const Register = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   className="h-11 text-base"
+                  required
                 />
                 <p className="text-xs text-gray-500">
-                  Email fit help you recover your account
+                  Email na very important for account recovery
                 </p>
               </div>
 
@@ -190,7 +191,7 @@ const Register = () => {
 
               <Button 
                 type="submit" 
-                className="w-full h-11 text-base font-semibold bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300" 
+                className="w-full h-11 text-base font-semibold bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300" 
                 disabled={loading}
               >
                 {loading ? (
@@ -208,7 +209,7 @@ const Register = () => {
                   Already have an account?{" "}
                   <Button 
                     variant="link" 
-                    className="p-0 h-auto font-semibold text-blue-600 hover:text-blue-700"
+                    className="p-0 h-auto font-semibold text-green-600 hover:text-green-700"
                     onClick={() => navigate('/login')}
                   >
                     Sign in here
