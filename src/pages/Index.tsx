@@ -15,30 +15,39 @@ import {
   Shield,
   Zap
 } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { useEffect, useState } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
   const features = [
     {
-      icon: <FileText className="h-6 w-6 text-primary" />,
+      icon: <FileText className="h-6 w-6 text-green-600" />,
       title: "Invoice Management",
       description: "Create professional invoices quickly. Perfect for small business owners wey wan organize their billing."
     },
     {
-      icon: <Receipt className="h-6 w-6 text-primary" />,
+      icon: <Receipt className="h-6 w-6 text-green-600" />,
       title: "Expense Tracking", 
       description: "Track your business expenses easily. Know where your money dey go and manage your budget better."
     },
     {
-      icon: <Users className="h-6 w-6 text-primary" />,
+      icon: <Users className="h-6 w-6 text-green-600" />,
       title: "Client Management",
       description: "Keep all your customer details in one place. Build better relationships with your clients."
     },
     {
-      icon: <Gift className="h-6 w-6 text-primary" />,
+      icon: <Gift className="h-6 w-6 text-green-600" />,
       title: "Referral Rewards",
-      description: "Earn up to ₦2,000 when you refer other business owners. Make money while helping others!"
+      description: "Earn up to ₦5,000 when you refer other business owners. Make money while helping others!"
     }
   ];
 
@@ -54,20 +63,76 @@ const Index = () => {
       business: "Abuja Catering Co.",
       rating: 5,
       text: "Before I dey struggle to manage my client payments. Now everything dey clear and organized. Thank you Bizflow!"
+    },
+    {
+      name: "Chinedu P.",
+      business: "Port Harcourt Electronics",
+      rating: 5,
+      text: "The referral system na real deal! I don earn ₦3,000 just by telling my friends about Bizflow. E easy well well!"
+    },
+    {
+      name: "Amina K.",
+      business: "Kano Fashion House",
+      rating: 5,
+      text: "Expenses tracking feature help me save money o. Now I know where every kobo dey go for my business."
+    },
+    {
+      name: "Emeka N.",
+      business: "Enugu Auto Parts",
+      rating: 5,
+      text: "Client management system na fire! I fit track all my customers and their purchase history. Business don grow!"
+    },
+    {
+      name: "Blessing T.",
+      business: "Lagos Beauty Salon",
+      rating: 5,
+      text: "Invoice creation dey quick like lightning. My customers dey happy with the professional invoices I dey send."
+    },
+    {
+      name: "Ibrahim S.",
+      business: "Kaduna Furniture",
+      rating: 5,
+      text: "Paystack integration na game changer! Now my customers fit pay invoice directly. No more wahala!"
+    },
+    {
+      name: "Grace E.",
+      business: "Warri Restaurant",
+      rating: 5,
+      text: "Analytics feature show me which dishes dey sell pass. Now I know wetin my customers like most!"
+    },
+    {
+      name: "Yakubu M.",
+      business: "Jos Pharmacy",
+      rating: 5,
+      text: "Mobile app dey work smooth for my phone. I fit manage my business anywhere I dey go!"
+    },
+    {
+      name: "Chioma V.",
+      business: "Owerri Boutique",
+      rating: 5,
+      text: "Free plan help me start small. When business grow, I upgrade to Silver. Bizflow dey grow with me!"
     }
   ];
 
+  // Auto-rotate testimonials
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-green-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">B</span>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
                 Bizflow
               </span>
             </div>
@@ -76,7 +141,7 @@ const Index = () => {
               <Button variant="ghost" onClick={() => navigate('/features')}>Features</Button>
               <Button variant="ghost" onClick={() => navigate('/pricing')}>Pricing</Button>
               <Button variant="ghost" onClick={() => navigate('/login')}>Login</Button>
-              <Button onClick={() => navigate('/register')} className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600">
+              <Button onClick={() => navigate('/register')} className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600">
                 Get Started Free
               </Button>
             </nav>
@@ -99,7 +164,7 @@ const Index = () => {
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Your Business,{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
                 Simplified
               </span>
             </h1>
@@ -113,7 +178,7 @@ const Index = () => {
               <Button 
                 size="lg" 
                 onClick={() => navigate('/register')}
-                className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
+                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               >
                 Get Started Free
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -123,7 +188,7 @@ const Index = () => {
                 variant="outline" 
                 size="lg"
                 onClick={() => navigate('/features')}
-                className="px-8 py-4 text-lg font-semibold rounded-xl border-2 w-full sm:w-auto"
+                className="px-8 py-4 text-lg font-semibold rounded-xl border-2 w-full sm:w-auto border-green-200 hover:border-green-300"
               >
                 Learn More
               </Button>
@@ -136,11 +201,11 @@ const Index = () => {
                 <span>100% Secure & Private</span>
               </div>
               <div className="flex items-center gap-2">
-                <Smartphone className="h-4 w-4 text-blue-500" />
+                <Smartphone className="h-4 w-4 text-green-500" />
                 <span>Mobile Responsive</span>
               </div>
               <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-orange-500" />
+                <Zap className="h-4 w-4 text-green-500" />
                 <span>Quick Setup</span>
               </div>
             </div>
@@ -162,9 +227,9 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md">
+              <Card key={index} className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md bg-gradient-to-br from-green-50 to-white">
                 <CardHeader className="text-center pb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-50 rounded-xl flex items-center justify-center mx-auto mb-4">
                     {feature.icon}
                   </div>
                   <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
@@ -181,7 +246,7 @@ const Index = () => {
       </section>
 
       {/* Pricing Preview */}
-      <section className="py-16 bg-gradient-to-br from-blue-50 to-orange-50">
+      <section className="py-16 bg-gradient-to-br from-green-50 to-green-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
@@ -194,7 +259,7 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Free Plan */}
-            <Card className="shadow-lg border-0">
+            <Card className="shadow-lg border-0 bg-white">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold">Free Plan</CardTitle>
                 <div className="text-3xl font-bold text-green-600 mt-2">₦0</div>
@@ -215,25 +280,29 @@ const Index = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Referral rewards</span>
+                  <span>Mobile responsive</span>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Silver Plan */}
-            <Card className="shadow-xl border-0 relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-gradient-to-r from-blue-600 to-orange-500 text-white px-3 py-1 text-sm font-semibold">
+            {/* Monthly Plan */}
+            <Card className="shadow-xl border-0 relative overflow-hidden bg-white">
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-green-600 to-green-500 text-white px-3 py-1 text-sm font-semibold">
                 Most Popular
               </div>
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">Silver Plan</CardTitle>
-                <div className="text-3xl font-bold text-blue-600 mt-2">₦4,000</div>
+                <CardTitle className="text-2xl font-bold">Monthly Plan</CardTitle>
+                <div className="text-3xl font-bold text-green-600 mt-2">₦4,500</div>
                 <CardDescription>per month</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Unlimited invoices & expenses</span>
+                  <span>450 invoices per month</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>450 expenses per month</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
@@ -241,15 +310,11 @@ const Index = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Advanced analytics</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
                   <span>Paystack integration</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Voice commands (coming soon)</span>
+                  <span>₦500 referral rewards</span>
                 </div>
               </CardContent>
             </Card>
@@ -259,7 +324,7 @@ const Index = () => {
             <Button 
               size="lg" 
               onClick={() => navigate('/pricing')}
-              className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+              className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600"
             >
               View All Plans
             </Button>
@@ -267,7 +332,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Testimonials Carousel */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -279,40 +344,48 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="shadow-lg border-0">
-                <CardContent className="pt-6">
-                  <div className="flex items-center mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 mb-4 italic">"{testimonial.text}"</p>
-                  <div>
-                    <p className="font-semibold">{testimonial.name}</p>
-                    <p className="text-sm text-gray-500">{testimonial.business}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="max-w-4xl mx-auto">
+            <Carousel className="w-full" opts={{ align: "start", loop: true }}>
+              <CarouselContent>
+                {testimonials.map((testimonial, index) => (
+                  <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                    <Card className="shadow-lg border-0 h-full bg-gradient-to-br from-green-50 to-white">
+                      <CardContent className="pt-6 h-full flex flex-col">
+                        <div className="flex items-center mb-4">
+                          {[...Array(testimonial.rating)].map((_, i) => (
+                            <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                          ))}
+                        </div>
+                        <p className="text-gray-700 mb-4 italic flex-grow">"{testimonial.text}"</p>
+                        <div className="mt-auto">
+                          <p className="font-semibold text-green-700">{testimonial.name}</p>
+                          <p className="text-sm text-gray-500">{testimonial.business}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-orange-500">
+      <section className="py-16 bg-gradient-to-r from-green-600 to-green-500">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Ready to Simplify Your Business?
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
+          <p className="text-xl text-green-100 mb-8">
             Join thousands of Nigerian businesses using Bizflow. Start free today!
           </p>
           <Button 
             size="lg"
             onClick={() => navigate('/register')}
-            className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            className="bg-white text-green-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
           >
             Get Started Free
             <ArrowRight className="ml-2 h-5 w-5" />
@@ -326,7 +399,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-green-500 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">B</span>
                 </div>
                 <span className="text-xl font-bold">Bizflow</span>

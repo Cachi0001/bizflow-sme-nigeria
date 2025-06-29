@@ -111,13 +111,11 @@ const Pricing = () => {
     if (planName === 'Free Plan') {
       navigate('/register');
     } else {
-      // Redirect to Paystack payment
-      const confirmationUrl = `https://preview--bizflow-sme-nigeria.lovable.app/dashboard?payment=success&plan=${encodeURIComponent(planName)}`;
       toast({
         title: "Redirecting to Payment",
         description: `You'll be redirected to Paystack to complete your ${planName} subscription.`,
       });
-      console.log('Confirmation URL:', confirmationUrl);
+      console.log('Payment redirect for:', planName);
       // This is where Paystack integration will go
     }
   };
@@ -127,7 +125,12 @@ const Pricing = () => {
       {/* Header */}
       <header className="px-4 lg:px-6 h-14 flex items-center border-b bg-white">
         <div className="flex items-center justify-center">
-          <span className="text-xl sm:text-2xl font-bold text-primary">Bizflow</span>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-green-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">B</span>
+            </div>
+            <span className="text-xl sm:text-2xl font-bold text-green-600">Bizflow</span>
+          </div>
         </div>
         <nav className="ml-auto flex gap-2 sm:gap-4">
           <Button variant="ghost" size="sm" onClick={() => navigate('/')}>Home</Button>
@@ -158,22 +161,22 @@ const Pricing = () => {
               return (
                 <Card 
                   key={key} 
-                  className={`relative ${isPopular ? 'ring-2 ring-primary scale-105 shadow-xl' : ''} h-fit`}
+                  className={`relative ${isPopular ? 'ring-2 ring-green-500 scale-105 shadow-xl bg-gradient-to-br from-green-50 to-white' : 'bg-white'} h-fit`}
                 >
                   {isPopular && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <Badge className="bg-primary text-white px-3 py-1 text-xs">
+                      <Badge className="bg-green-600 text-white px-3 py-1 text-xs">
                         Most Popular
                       </Badge>
                     </div>
                   )}
                   
                   <CardHeader className="text-center pb-4">
-                    <CardTitle className="text-lg sm:text-xl font-bold">{plan.name}</CardTitle>
+                    <CardTitle className="text-lg sm:text-xl font-bold text-green-800">{plan.name}</CardTitle>
                     <CardDescription className="text-sm">{plan.description}</CardDescription>
                     
                     <div className="mt-3">
-                      <div className="text-2xl sm:text-3xl font-bold text-primary">
+                      <div className="text-2xl sm:text-3xl font-bold text-green-600">
                         {formatPrice(plan.price.monthly)}
                       </div>
                       <div className="text-gray-600 text-xs sm:text-sm">
@@ -187,11 +190,11 @@ const Pricing = () => {
                     <div className="mt-4 space-y-2 text-xs">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Invoices:</span>
-                        <span className="font-medium">{plan.invoiceLimit}</span>
+                        <span className="font-medium text-green-700">{plan.invoiceLimit}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Expenses:</span>
-                        <span className="font-medium">{plan.expenseLimit}</span>
+                        <span className="font-medium text-green-700">{plan.expenseLimit}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Referral Reward:</span>
@@ -217,7 +220,7 @@ const Pricing = () => {
                     </div>
 
                     <Button 
-                      className="w-full text-sm" 
+                      className={`w-full text-sm ${isPopular ? 'bg-green-600 hover:bg-green-700' : ''}`}
                       size="sm"
                       onClick={() => handleSubscribe(plan.name)}
                       variant={isPopular ? 'default' : 'outline'}
@@ -240,7 +243,7 @@ const Pricing = () => {
       </section>
 
       {/* Referral Section */}
-      <section className="py-8 sm:py-16 bg-green-50">
+      <section className="py-8 sm:py-16 bg-gradient-to-br from-green-50 to-green-100">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900">
             Earn Money with Referrals
@@ -250,16 +253,16 @@ const Pricing = () => {
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
-            <Card className="text-center">
+            <Card className="text-center bg-white border-green-200">
               <CardContent className="p-4 sm:p-6">
-                <div className="text-2xl sm:text-3xl font-bold text-primary mb-2">₦500</div>
+                <div className="text-2xl sm:text-3xl font-bold text-green-600 mb-2">₦500</div>
                 <div className="text-sm sm:text-base text-gray-600">Monthly Plan subscribers</div>
               </CardContent>
             </Card>
             
-            <Card className="text-center">
+            <Card className="text-center bg-white border-green-200">
               <CardContent className="p-4 sm:p-6">
-                <div className="text-2xl sm:text-3xl font-bold text-primary mb-2">₦5,000</div>
+                <div className="text-2xl sm:text-3xl font-bold text-green-600 mb-2">₦5,000</div>
                 <div className="text-sm sm:text-base text-gray-600">Yearly Plan subscribers</div>
               </CardContent>
             </Card>
@@ -274,7 +277,7 @@ const Pricing = () => {
 
           <Button 
             size="sm"
-            className="mt-6 sm:mt-8"
+            className="mt-6 sm:mt-8 bg-green-600 hover:bg-green-700"
             onClick={() => navigate('/register')}
           >
             Start Referring and Earning
@@ -286,13 +289,15 @@ const Pricing = () => {
       <footer className="bg-gray-900 text-white py-6 sm:py-8">
         <div className="container mx-auto px-4 text-center">
           <div className="mb-4">
-            <span className="text-xl sm:text-2xl font-bold text-primary">Bizflow</span>
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-green-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">B</span>
+              </div>
+              <span className="text-xl sm:text-2xl font-bold text-green-500">Bizflow</span>
+            </div>
           </div>
           <p className="text-gray-400 text-xs sm:text-sm">
             © 2024 Bizflow. Made with ❤️ for Nigerian businesses.
-          </p>
-          <p className="text-gray-500 text-xs mt-2">
-            Confirmation URL: https://preview--bizflow-sme-nigeria.lovable.app/dashboard?payment=success
           </p>
         </div>
       </footer>
