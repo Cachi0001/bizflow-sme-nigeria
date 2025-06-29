@@ -24,32 +24,41 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
 
+    console.log('Form data:', formData);
+
     // Validation
-    if (!formData.phone || !formData.email || !formData.password) {
+    if (!formData.email || !formData.password) {
+      console.error('Missing required fields');
       setLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
+      console.error('Passwords do not match');
       setLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
+      console.error('Password too short');
       setLoading(false);
       return;
     }
 
     try {
+      console.log('Calling signUp...');
       const { error } = await signUp(
-        formData.phone, 
+        formData.phone || '', // Allow empty phone
         formData.email, 
         formData.password, 
         formData.businessName
       );
 
+      console.log('SignUp result:', { error });
+
       if (!error) {
-        navigate('/dashboard');
+        // Don't auto-redirect, let the user confirm their email first
+        console.log('Registration successful');
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -104,24 +113,6 @@ const Register = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                  Phone Number *
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="e.g., 08012345678"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="h-11 text-base"
-                  required
-                />
-                <p className="text-xs text-gray-500">
-                  Enter your phone number wey we go use reach you
-                </p>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                   Email Address *
                 </Label>
@@ -136,6 +127,23 @@ const Register = () => {
                 />
                 <p className="text-xs text-gray-500">
                   Email na very important for account recovery
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                  Phone Number
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="e.g., 08012345678"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  className="h-11 text-base"
+                />
+                <p className="text-xs text-gray-500">
+                  Enter your phone number wey we go use reach you (optional)
                 </p>
               </div>
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,22 +44,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (phone: string, email: string, password: string, businessName?: string) => {
     try {
-      if (!email || !phone) {
-        throw new Error("Both email and phone are required");
+      if (!email || !password) {
+        throw new Error("Email and password are required");
       }
 
+      // Clean phone number - ensure it's not empty
+      const cleanPhone = phone?.trim() || '';
+
+      console.log('Attempting signup with:', { email, phone: cleanPhone, businessName });
+
       const { data, error } = await supabase.auth.signUp({
-        email: email,
+        email: email.trim(),
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
-            phone: phone,
-            business_name: businessName || ""
+            phone: cleanPhone,
+            business_name: businessName?.trim() || ""
           }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase signup error:', error);
+        throw error;
+      }
+
+      console.log('Signup successful:', data);
 
       if (data.user && !data.user.email_confirmed_at) {
         toast({
@@ -77,9 +87,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { data, error: null };
     } catch (error: any) {
       console.error('Signup error:', error);
+      const errorMessage = error.message || "Failed to create account. Please try again.";
+      
       toast({
         title: "Registration failed",
-        description: error.message || "Failed to create account. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
       return { data: null, error };
@@ -88,15 +100,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (phoneOrEmail: string, password: string) => {
     try {
-      // If it's a phone number, convert to email format for backward compatibility
-      const email = phoneOrEmail.includes('@') ? phoneOrEmail : `${phoneOrEmail}@bizflow.app`;
+      if (!phoneOrEmail || !password) {
+        throw new Error("Phone/Email and password are required");
+      }
+
+      // Use email directly if it contains @, otherwise treat as phone
+      const identifier = phoneOrEmail.includes('@') ? phoneOrEmail.trim() : phoneOrEmail.trim();
       
+      console.log('Attempting signin with:', identifier);
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: identifier,
         password
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase signin error:', error);
+        throw error;
+      }
+
+      console.log('Signin successful:', data);
 
       toast({
         title: "Welcome back!",
@@ -106,9 +129,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { data, error: null };
     } catch (error: any) {
       console.error('Login error:', error);
+      const errorMessage = error.message || "Invalid credentials. Please try again.";
+      
       toast({
         title: "Login failed",
-        description: error.message || "Invalid credentials. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
       return { data: null, error };
@@ -137,7 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const resetPassword = async (email: string) => {
     try {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `https://preview--bizflow-sme-nigeria.lovable.app/reset-password`
+        redirectTo: `${window.location.origin}/reset-password`
       });
 
       if (error) throw error;
