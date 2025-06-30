@@ -75,7 +75,27 @@ serve(async (req) => {
       throw new Error('Failed to create user')
     }
 
-    // 2. Insert into team_members table
+    // 2. Insert into users table (required for foreign key constraint)
+    const { error: userError } = await supabaseAdmin
+      .from("users")
+      .insert({
+        id: authData.user.id,
+        email: email,
+        phone: null, // Salespeople might not have phone numbers
+        role: 'Salesperson',
+        subscription_tier: 'Free', // Salespeople don't have their own subscription
+        business_name: `${name} (Salesperson)`,
+        active: true
+      })
+
+    if (userError) {
+      // If user creation fails, clean up the auth user
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      console.error('User table creation error:', userError)
+      throw userError
+    }
+
+    // 3. Insert into team_members table
     const { error: teamError } = await supabaseAdmin
       .from("team_members")
       .insert({
@@ -87,8 +107,9 @@ serve(async (req) => {
       })
 
     if (teamError) {
-      // If team member creation fails, clean up the auth user
+      // If team member creation fails, clean up both the auth user and users table record
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      await supabaseAdmin.from("users").delete().eq("id", authData.user.id)
       console.error('Team member creation error:', teamError)
       throw teamError
     }

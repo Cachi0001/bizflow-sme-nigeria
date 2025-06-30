@@ -70,14 +70,7 @@ serve(async (req) => {
       throw new Error("Salesperson not found or access denied")
     }
 
-    // 2. Delete the user from Supabase Auth
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(memberData.salesperson_id)
-    if (authDeleteError) {
-      console.error('Auth delete error:', authDeleteError)
-      throw authDeleteError
-    }
-
-    // 3. Delete from team_members table
+    // 2. Delete from team_members table first
     const { error: teamDeleteError } = await supabaseAdmin
       .from("team_members")
       .delete()
@@ -87,6 +80,24 @@ serve(async (req) => {
     if (teamDeleteError) {
       console.error('Team delete error:', teamDeleteError)
       throw teamDeleteError
+    }
+
+    // 3. Delete from users table
+    const { error: userDeleteError } = await supabaseAdmin
+      .from("users")
+      .delete()
+      .eq("id", memberData.salesperson_id)
+
+    if (userDeleteError) {
+      console.error('User delete error:', userDeleteError)
+      // Continue with auth deletion even if users table deletion fails
+    }
+
+    // 4. Delete the user from Supabase Auth
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(memberData.salesperson_id)
+    if (authDeleteError) {
+      console.error('Auth delete error:', authDeleteError)
+      throw authDeleteError
     }
 
     return new Response(

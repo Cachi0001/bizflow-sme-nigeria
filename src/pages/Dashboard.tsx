@@ -31,6 +31,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import SalesReport from "@/components/SalesReport";
 
 interface DashboardStats {
   totalInvoices: number;
@@ -407,6 +408,9 @@ const Dashboard = () => {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+
+        {/* Sales Report Section */}
+        <SalesReport />
 
         {/* Subscription Section */}
         <Card className="bg-gradient-to-br from-green-50 to-blue-50">
