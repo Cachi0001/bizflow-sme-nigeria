@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -18,9 +17,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { currentPlan, newPlan, userId } = await req.json();
+    const { currentPlan, newPlan, userId, userEmail } = await req.json();
 
-    console.log('Processing upgrade:', { currentPlan, newPlan, userId });
+    console.log('Processing upgrade:', { currentPlan, newPlan, userId, userEmail });
 
     // Get current subscription details
     const { data: currentSubscription, error: subError } = await supabaseClient
@@ -30,109 +29,128 @@ serve(async (req) => {
       .eq('status', 'Active')
       .single();
 
-    if (subError) {
+    if (subError && subError.code !== 'PGRST116') { // PGRST116 means no rows found
       console.error('Error fetching current subscription:', subError);
-      throw new Error('Current subscription not found');
+      throw new Error('Failed to fetch current subscription');
     }
 
-    // Calculate pro-rata credit
-    let proRataCredit = 0;
-    const now = new Date();
-    const endDate = new Date(currentSubscription.end_date);
-    const remainingDays = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-
     // Plan pricing (in kobo for Paystack)
-    const planPrices = {
+    const planPrices: { [key: string]: number } = {
       'Free': 0,
       'Weekly': 140000, // ₦1,400
       'Monthly': 450000, // ₦4,500
       'Yearly': 5000000 // ₦50,000
     };
 
-    // Calculate daily rate of current plan
-    let dailyRate = 0;
-    if (currentPlan === 'Weekly') {
-      dailyRate = planPrices.Weekly / 7;
-    } else if (currentPlan === 'Monthly') {
-      dailyRate = planPrices.Monthly / 30;
-    } else if (currentPlan === 'Yearly') {
-      dailyRate = planPrices.Yearly / 365;
+    let proRataCredit = 0;
+    if (currentSubscription) {
+      const now = new Date();
+      const endDate = new Date(currentSubscription.end_date);
+      const remainingDays = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+
+      let dailyRate = 0;
+      if (currentPlan === 'Weekly') {
+        dailyRate = planPrices.Weekly / 7;
+      } else if (currentPlan === 'Monthly') {
+        dailyRate = planPrices.Monthly / 30;
+      } else if (currentPlan === 'Yearly') {
+        dailyRate = planPrices.Yearly / 365;
+      }
+      proRataCredit = Math.floor(dailyRate * remainingDays);
     }
 
-    proRataCredit = Math.floor(dailyRate * remainingDays);
-
-    console.log('Pro-rata calculation:', {
-      remainingDays,
-      dailyRate,
-      proRataCredit
-    });
-
-    // Calculate new plan cost after credit
     const newPlanCost = planPrices[newPlan] || 0;
     const finalAmount = Math.max(0, newPlanCost - proRataCredit);
 
-    // Update current subscription to expired
-    const { error: updateError } = await supabaseClient
-      .from('subscriptions')
-      .update({
-        status: 'Expired',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', currentSubscription.id);
+    if (finalAmount <= 0) {
+      // If amount is 0 or negative, directly upgrade without Paystack
+      if (currentSubscription) {
+        await supabaseClient
+          .from('subscriptions')
+          .update({
+            status: 'Expired',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', currentSubscription.id);
+      }
 
-    if (updateError) {
-      console.error('Error updating current subscription:', updateError);
-      throw new Error('Failed to update current subscription');
+      let newEndDate = new Date();
+      if (newPlan === 'Weekly') {
+        newEndDate.setDate(newEndDate.getDate() + 7);
+      } else if (newPlan === 'Monthly') {
+        newEndDate.setMonth(newEndDate.getMonth() + 1);
+      } else if (newPlan === 'Yearly') {
+        newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+      }
+
+      await supabaseClient
+        .from('subscriptions')
+        .insert({
+          user_id: userId,
+          tier: newPlan,
+          status: 'Active',
+          start_date: new Date().toISOString(),
+          end_date: newEndDate.toISOString(),
+          created_at: new Date().toISOString()
+        });
+
+      await supabaseClient
+        .from('users')
+        .update({
+          subscription_tier: newPlan,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Upgrade successful (no payment required).',
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
-    // Calculate new end date
-    let newEndDate = new Date();
-    if (newPlan === 'Weekly') {
-      newEndDate.setDate(newEndDate.getDate() + 7);
-    } else if (newPlan === 'Monthly') {
-      newEndDate.setMonth(newEndDate.getMonth() + 1);
-    } else if (newPlan === 'Yearly') {
-      newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+    // Initiate Paystack transaction
+    const paystackSecretKey = Deno.env.get('PAYSTACK_SECRET_KEY');
+    if (!paystackSecretKey) {
+      throw new Error('PAYSTACK_SECRET_KEY not found in environment variables');
     }
 
-    // Create new subscription
-    const { error: createError } = await supabaseClient
-      .from('subscriptions')
-      .insert({
-        user_id: userId,
-        tier: newPlan,
-        status: 'Active',
-        start_date: new Date().toISOString(),
-        end_date: newEndDate.toISOString(),
-        created_at: new Date().toISOString()
-      });
+    const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${paystackSecretKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: userEmail, // User's email for Paystack
+        amount: finalAmount, // in kobo
+        callback_url: Deno.env.get('PAYSTACK_CALLBACK_URL') ?? 'http://localhost:3000/dashboard', // Redirect after payment
+        metadata: {
+          userId: userId,
+          newPlan: newPlan,
+          currentPlan: currentPlan,
+          proRataCredit: proRataCredit,
+        },
+      }),
+    });
 
-    if (createError) {
-      console.error('Error creating new subscription:', createError);
-      throw new Error('Failed to create new subscription');
+    if (!paystackResponse.ok) {
+      const errorData = await paystackResponse.json();
+      console.error('Paystack initialization error:', errorData);
+      throw new Error(`Paystack initialization failed: ${errorData.message || paystackResponse.statusText}`);
     }
 
-    // Update user's subscription tier
-    const { error: userUpdateError } = await supabaseClient
-      .from('users')
-      .update({
-        subscription_tier: newPlan,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
-
-    if (userUpdateError) {
-      console.error('Error updating user subscription tier:', userUpdateError);
-    }
+    const paystackData = await paystackResponse.json();
 
     return new Response(
       JSON.stringify({
         success: true,
-        proRataCredit: proRataCredit / 100, // Convert back to naira
-        originalAmount: newPlanCost / 100,
-        finalAmount: finalAmount / 100,
-        remainingDays,
-        message: `Upgrade successful! You received ₦${(proRataCredit / 100).toFixed(2)} pro-rata credit.`
+        redirectUrl: paystackData.data.authorization_url,
       }),
       {
         status: 200,
@@ -144,7 +162,7 @@ serve(async (req) => {
     console.error('Error in handle-upgrade:', error);
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: error.message || 'Internal Server Error',
         success: false,
       }),
       {
@@ -154,3 +172,5 @@ serve(async (req) => {
     );
   }
 });
+
+

@@ -52,12 +52,21 @@ ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.referral_earnings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.withdrawal_requests ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing RLS policies for team_members if they exist
+DROP POLICY IF EXISTS "Owners can manage their team members" ON public.team_members;
+DROP POLICY IF EXISTS "Salespeople can view their own record" ON public.team_members;
+
 -- RLS policies for team_members
 CREATE POLICY "Owners can manage their team members" ON public.team_members
   FOR ALL USING (auth.uid() = owner_id);
 
 CREATE POLICY "Salespeople can view their own record" ON public.team_members
   FOR SELECT USING (auth.uid() = salesperson_id);
+
+-- Drop existing RLS policies for referral_earnings if they exist
+DROP POLICY IF EXISTS "Users can view their own earnings" ON public.referral_earnings;
+DROP POLICY IF EXISTS "System can create earnings" ON public.referral_earnings;
+DROP POLICY IF EXISTS "Users can update their own earnings" ON public.referral_earnings;
 
 -- RLS policies for referral_earnings
 CREATE POLICY "Users can view their own earnings" ON public.referral_earnings
@@ -68,6 +77,9 @@ CREATE POLICY "System can create earnings" ON public.referral_earnings
 
 CREATE POLICY "Users can update their own earnings" ON public.referral_earnings
   FOR UPDATE USING (auth.uid() = referrer_id);
+
+-- Drop existing RLS policies for withdrawal_requests if they exist
+DROP POLICY IF EXISTS "Users can manage their own withdrawals" ON public.withdrawal_requests;
 
 -- RLS policies for withdrawal_requests
 CREATE POLICY "Users can manage their own withdrawals" ON public.withdrawal_requests
@@ -87,6 +99,7 @@ CREATE POLICY "Users can manage own invoices" ON public.invoices
   );
 
 -- Restrict delete for salespeople on invoices
+DROP POLICY IF EXISTS "Only owners can delete invoices" ON public.invoices;
 CREATE POLICY "Only owners can delete invoices" ON public.invoices
   FOR DELETE USING (auth.uid() = user_id);
 
@@ -103,6 +116,7 @@ CREATE POLICY "Users can manage own expenses" ON public.expenses
   );
 
 -- Restrict delete for salespeople on expenses
+DROP POLICY IF EXISTS "Only owners can delete expenses" ON public.expenses;
 CREATE POLICY "Only owners can delete expenses" ON public.expenses
   FOR DELETE USING (auth.uid() = user_id);
 
@@ -202,3 +216,5 @@ EXCEPTION
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+

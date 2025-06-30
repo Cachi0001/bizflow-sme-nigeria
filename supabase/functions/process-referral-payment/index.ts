@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -22,8 +21,23 @@ serve(async (req) => {
 
     console.log('Processing referral payment:', { referrerId, referredId, planType, upgradeAmount });
 
-    // Calculate referral earning (10% of upgrade amount)
-    const earningAmount = upgradeAmount * 0.10;
+    let earningAmount = 0;
+    if (planType === 'Monthly') {
+      earningAmount = 500; // ₦500 for monthly Silver
+    }
+
+    if (earningAmount === 0) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'No referral reward for this plan type.',
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     // Create referral earning record
     const { error: earningError } = await supabaseClient
@@ -66,3 +80,5 @@ serve(async (req) => {
     );
   }
 });
+
+
