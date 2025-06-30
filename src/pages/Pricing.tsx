@@ -1,4 +1,4 @@
-import { useState, useEffect } => "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, ArrowLeft } from "lucide-react";
@@ -24,7 +24,7 @@ const Pricing = () => {
       setTimeout(() => {
         toast({
           title: "Upgrade successful!",
-          description: `You've been upgraded to ${tier} plan.`
+          description: `You\'ve been upgraded to ${tier} plan.`
         });
         setUpgrading(null);
       }, 2000);
@@ -55,7 +55,7 @@ const Pricing = () => {
       {/* Intro */}
       <div className="max-w-4xl mx-auto text-center py-10">
         <h2 className="text-3xl font-extrabold text-gray-900">
-          Choose the plan that's right for your business
+          Choose the plan that\'s right for your business
         </h2>
         <p className="mt-4 text-lg text-gray-600">
           Simple, transparent pricing. Upgrade or downgrade at any time.
@@ -97,48 +97,52 @@ const Pricing = () => {
             </CardContent>
           </Card>
 
-          {/* Weekly Plan */}
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50 shadow-lg hover:shadow-xl transition-shadow border-2 border-green-200">
+          {/* Monthly Plan */}
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold text-white">Weekly Plan</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">Monthly Plan</CardTitle>
               <div className="mt-4">
-                <span className="text-4xl font-bold text-white">₦1,400</span>
-                <span className="text-gray-200">/week</span>
+                <span className="text-4xl font-bold text-gray-900">₦4,500</span>
+                <span className="text-gray-500">/month</span>
               </div>
-              <CardDescription className="mt-2 text-gray-100">
-                For short-term projects and freelancers
+              <CardDescription className="mt-2">
+                For growing businesses
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-3">
-                <li className="flex items-center text-white">
-                  <Check className="h-5 w-5 text-green-300 mr-2" />
-                  <span>100 invoices per week</span>
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>450 invoices per month</span>
                 </li>
-                <li className="flex items-center text-white">
-                  <Check className="h-5 w-5 text-green-300 mr-2" />
-                  <span>100 expense records per week</span>
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>450 expense records per month</span>
                 </li>
-                <li className="flex items-center text-white">
-                  <Check className="h-5 w-5 text-green-300 mr-2" />
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
                   <span>Unlimited clients</span>
                 </li>
-                <li className="flex items-center text-white">
-                  <Check className="h-5 w-5 text-green-300 mr-2" />
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
                   <span>Advanced reporting</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>₦500 referral rewards</span>
                 </li>
               </ul>
               <Button 
-                className="w-full bg-white text-green-600 hover:bg-green-100"
-                onClick={() => handleUpgrade("Weekly")}
-                disabled={upgrading === "Weekly"}
+                className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white"
+                onClick={() => handleUpgrade("Monthly")}
+                disabled={upgrading === "Monthly"}
               >
-                {upgrading === "Weekly" ? "Processing..." : "Choose Weekly"}
+                {upgrading === "Monthly" ? "Processing..." : "Choose Monthly"}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Yearly Plan - Updated limits */}
+          {/* Yearly Plan */}
           <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-gray-900">Yearly Plan</CardTitle>

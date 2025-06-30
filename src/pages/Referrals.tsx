@@ -81,8 +81,8 @@ const Referrals = () => {
           currentReferralCode = data.referral_code;
           setReferralCode(currentReferralCode);
         } else {
-          // Generate a new referral code if one doesn't exist
-          const newCode = `REF-${Math.random().toString(36).substr(2, 8)}`;
+          // Generate a new referral code if one doesn\'t exist
+          const newCode = `REF-${user?.id.substring(0, 8)}`; // Use user ID for consistent code
           const { error: updateError } = await supabase
             .from("users")
             .update({ referral_code: newCode })
@@ -156,7 +156,7 @@ const Referrals = () => {
     if (amount > availableBalance) {
       toast({
         title: "Insufficient balance",
-        description: "You don't have enough balance for this withdrawal.",
+        description: "You don\'t have enough balance for this withdrawal.",
         variant: "destructive"
       });
       return;
