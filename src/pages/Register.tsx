@@ -1,325 +1,173 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client"; // Added: Import supabase for database checks
-
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Mail, Phone, Briefcase, Lock } from "lucide-react";
 
 const Register = () => {
   const [formData, setFormData] = useState({
     phone: "",
     email: "",
     password: "",
-    confirmPassword: "",
-    businessName: ""
+    businessName: "",
+    referralCode: ""
   });
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { signUp } = useAuth();
   const navigate = useNavigate();
-  const { signUp, user } = useAuth();
-  const { toast } = useToast();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Extract referral code from URL
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      setFormData(prev => ({ ...prev, referralCode: ref }));
+    }
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-     // Added: Check if email or phone already exists in the database
     try {
-      const { data: emailCheck, error: emailError } = await supabase
-        .from('users')
-        .select('email')
-        .eq('email', formData.email)
-        .single();
-
-      if (emailError && emailError.code !== 'PGRST116') { // PGRST116 means no rows found, which is okay
-        throw emailError;
-      }
-      if (emailCheck) {
-        toast({
-          title: "Email Already Exists",
-          description: "This email is already registered. Please use a different one or log in.",
-          variant: "destructive"
-        });
-        setLoading(false);
-        return;
-      }
-
-      const { data: phoneCheck, error: phoneError } = await supabase
-        .from('users')
-        .select('phone')
-        .eq('phone', formData.phone)
-        .single();
-
-      if (phoneError && phoneError.code !== 'PGRST116') {
-        throw phoneError;
-      }
-      if (phoneCheck) {
-        toast({
-          title: "Phone Number Already Exists",
-          description: "This phone number is already registered. Please use a different one.",
-          variant: "destructive"
-        });
-        setLoading(false);
-        return;
-      }
+      const { phone, email, password, businessName, referralCode } = formData;
+      await signUp(phone, email, password, businessName, referralCode);
+      navigate('/dashboard');
     } catch (error) {
-      console.error('Error checking existing credentials:', error);
-      toast({
-        title: "Error",
-        description: "An error occurred while checking credentials. Please try again.",
-        variant: "destructive"
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.email || !formData.password) {
-      toast({
-        title: "Missing Information",
-        description: "Email and password are required.",
-        variant: "destructive"
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match.",
-        variant: "destructive"
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast({
-        title: "Password Too Short",
-        description: "Password must be at least 6 characters long.",
-        variant: "destructive"
-      });
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Get referral code from URL if present
-      const urlParams = new URLSearchParams(window.location.search);
-      const referralCode = urlParams.get('ref');
-
-      const { error } = await signUp(
-        formData.phone || '', 
-        formData.email, 
-        formData.password, 
-        formData.businessName,
-        referralCode
-      );
-
-      if (!error) {
-        navigate('/login');
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
+      // Error is handled within the signUp function
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex flex-col">
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Back to Home</span>
-            </Button>
-            
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-blue-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">B</span>
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">
-                Bizflow
-              </span>
-            </div>
-            
-            {!user && (
-              <Button variant="ghost" onClick={() => navigate('/login')}>
-                Login
-              </Button>
-            )}
-            {user && (
-              <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-                Dashboard
-              </Button>
-            )}
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Create your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Join Bizflow and manage your business finances
+          </p>
         </div>
-      </header>
-
-      <div className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-xl border-0 bg-gradient-to-br from-green-50 to-blue-50">
-          <CardHeader className="text-center space-y-4 pb-6">
-            <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">
-              Create Your Account
-            </CardTitle>
-            <CardDescription className="text-base text-gray-600">
-              Join thousands of Nigerian businesses using Bizflow
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email Address *
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="e.g., yourname@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="h-11 text-base"
-                  required
-                />
-                <p className="text-xs text-gray-500">
-                  Email is required for account recovery
-                </p>
+        <Card className="bg-white shadow-xl">
+          <CardContent className="p-8">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {/* Phone Number Field */}
+              <div>
+                <Label htmlFor="phone">Phone Number</Label>
+                <div className="relative mt-1">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    required
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="Enter your phone number"
+                    className="pl-10"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                  Phone Number (Optional)
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="e.g., 08012345678"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="h-11 text-base"
-                />
-                <p className="text-xs text-gray-500">
-                  Phone number for notifications (optional)
-                </p>
+              {/* Email Address Field */}
+              <div>
+                <Label htmlFor="email">Email Address</Label>
+                <div className="relative mt-1">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="Enter your email address"
+                    className="pl-10"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="businessName" className="text-sm font-medium text-gray-700">
-                  Business Name (Optional)
-                </Label>
-                <Input
-                  id="businessName"
-                  type="text"
-                  placeholder="e.g., Adebayo Fashion Store"
-                  value={formData.businessName}
-                  onChange={(e) => setFormData({...formData, businessName: e.target.value})}
-                  className="h-11 text-base"
-                />
-                <p className="text-xs text-gray-500">
-                  What do you call your business?
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Password *
-                </Label>
-                <div className="relative">
+              {/* Password Field */}
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <div className="relative mt-1">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <Input
                     id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Create a strong password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
                     value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="h-11 text-base pr-10"
-                    required
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Enter your password"
+                    className="pl-10"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
                 </div>
-                <p className="text-xs text-gray-500">
-                  Use at least 6 characters with mix of letters and numbers
-                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
-                  Confirm Password *
-                </Label>
-                <div className="relative">
+              {/* Business Name Field */}
+              <div>
+                <Label htmlFor="businessName">Business Name</Label>
+                <div className="relative mt-1">
+                  <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Type your password again"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                    className="h-11 text-base pr-10"
+                    id="businessName"
+                    name="businessName"
+                    type="text"
                     required
+                    value={formData.businessName}
+                    onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                    placeholder="Enter your business name"
+                    className="pl-10"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full h-11 text-base font-semibold bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300" 
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Account...
-                  </>
-                ) : (
-                  "Create My Free Account"
+              {/* Referral Code Field */}
+              <div>
+                <Label htmlFor="referralCode">Referral Code (Optional)</Label>
+                <Input
+                  id="referralCode"
+                  name="referralCode"
+                  type="text"
+                  value={formData.referralCode}
+                  onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
+                  placeholder="Enter referral code if you have one"
+                  className="mt-1"
+                />
+                {formData.referralCode && (
+                  <p className="text-xs text-green-600 mt-1">
+                    Great! You'll help support the person who referred you.
+                  </p>
                 )}
-              </Button>
-
-              <div className="text-center pt-4">
-                <p className="text-sm text-gray-600">
-                  Already have an account?{" "}
-                  <Button 
-                    variant="link" 
-                    className="p-0 h-auto font-semibold text-green-600 hover:text-green-700"
-                    onClick={() => navigate('/login')}
-                  >
-                    Sign in here
-                  </Button>
-                </p>
               </div>
 
-              <div className="text-center pt-2">
-                <p className="text-xs text-gray-500">
-                  By creating an account, you agree to our Terms of Service and Privacy Policy
-                </p>
+              <div>
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white"
+                  disabled={loading}
+                >
+                  {loading ? "Creating account..." : "Create Account"}
+                </Button>
               </div>
             </form>
+            <div className="mt-4 text-center">
+              Already have an account?{" "}
+              <Button variant="link" onClick={() => navigate('/login')}>
+                Log in
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

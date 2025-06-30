@@ -77,9 +77,11 @@ const TeamManagement = () => {
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             role: 'Salesperson',
-            business_name: formData.name
+            business_name: formData.name,
+            phone: ''
           }
         }
       });

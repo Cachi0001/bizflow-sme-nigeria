@@ -9,88 +9,105 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  Gift, 
-  Copy, 
   Users, 
+  Copy, 
   DollarSign, 
   ArrowLeft,
   Banknote,
-  TrendingUp
+  TrendingUp,
+  UserCheck
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface ReferralEarning {
   id: string;
-  referred_id: string;
   amount: number;
   status: string;
   created_at: string;
-  users: {
-    email: string;
+  referred_id: string;
+  users?: {
     business_name: string;
+    email: string;
   };
 }
 
-interface WithdrawalRequest {
-  id: string;
-  amount: number;
-  bank_name: string;
-  account_number: string;
-  account_name: string;
-  status: string;
-  created_at: string;
+interface WithdrawalData {
+  amount: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
 }
 
 const Referrals = () => {
+  const [referralCode, setReferralCode] = useState("");
+  const [referralLink, setReferralLink] = useState("");
   const [earnings, setEarnings] = useState<ReferralEarning[]>([]);
-  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+  const [totalEarnings, setTotalEarnings] = useState(0);
+  const [availableBalance, setAvailableBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [withdrawing, setWithdrawing] = useState(false);
-  const [withdrawalForm, setWithdrawalForm] = useState({
+  const [showWithdrawForm, setShowWithdrawForm] = useState(false);
+  const [withdrawalData, setWithdrawalData] = useState<WithdrawalData>({
     amount: "",
-    bank_name: "",
-    account_number: "",
-    account_name: ""
+    bankName: "",
+    accountNumber: "",
+    accountName: ""
   });
+  
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
-      loadReferralData();
+      loadUserData();
+      loadEarnings();
     }
   }, [user]);
 
-  const loadReferralData = async () => {
+  const loadUserData = async () => {
     try {
-      // Load earnings
-      const { data: earningsData, error: earningsError } = await supabase
+      const { data, error } = await supabase
+        .from('users')
+        .select('referral_code')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data?.referral_code) {
+        setReferralCode(data.referral_code);
+        setReferralLink(`${window.location.origin}/register?ref=${data.referral_code}`);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
+  const loadEarnings = async () => {
+    try {
+      const { data, error } = await supabase
         .from('referral_earnings')
         .select(`
           *,
-          users!referral_earnings_referred_id_fkey(email, business_name)
+          users!referral_earnings_referred_id_fkey(business_name, email)
         `)
         .eq('referrer_id', user?.id)
         .order('created_at', { ascending: false });
 
-      if (earningsError) throw earningsError;
+      if (error) throw error;
 
-      // Load withdrawals
-      const { data: withdrawalsData, error: withdrawalsError } = await supabase
-        .from('withdrawal_requests')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
-
-      if (withdrawalsError) throw withdrawalsError;
-
-      setEarnings(earningsData || []);
-      setWithdrawals(withdrawalsData || []);
+      setEarnings(data || []);
+      
+      const total = data?.reduce((sum, earning) => sum + Number(earning.amount), 0) || 0;
+      setTotalEarnings(total);
+      
+      const available = data?.filter(e => e.status === 'pending').reduce((sum, earning) => sum + Number(earning.amount), 0) || 0;
+      setAvailableBalance(available);
     } catch (error) {
-      console.error('Error loading referral data:', error);
+      console.error('Error loading earnings:', error);
       toast({
-        title: "Error loading referral data",
+        title: "Error loading earnings",
         description: "Please try again later.",
         variant: "destructive"
       });
@@ -100,40 +117,22 @@ const Referrals = () => {
   };
 
   const copyReferralLink = () => {
-    const referralLink = `${window.location.origin}/register?ref=${user?.user_metadata?.referral_code}`;
     navigator.clipboard.writeText(referralLink);
-    
     toast({
       title: "Referral link copied!",
-      description: "Share this link to earn money when people upgrade to paid plans."
+      description: "Share this link with others to earn rewards."
     });
   };
 
-  const getTotalEarnings = () => {
-    return earnings.reduce((sum, earning) => sum + Number(earning.amount), 0);
-  };
-
-  const getAvailableBalance = () => {
-    const totalEarnings = getTotalEarnings();
-    const totalWithdrawn = withdrawals
-      .filter(w => w.status === 'completed')
-      .reduce((sum, w) => sum + Number(w.amount), 0);
-    const pendingWithdrawals = withdrawals
-      .filter(w => w.status === 'pending' || w.status === 'processing')
-      .reduce((sum, w) => sum + Number(w.amount), 0);
-    
-    return totalEarnings - totalWithdrawn - pendingWithdrawals;
-  };
-
-  const submitWithdrawal = async (e: React.FormEvent) => {
+  const handleWithdrawal = async (e: React.FormEvent) => {
     e.preventDefault();
-    const amount = parseFloat(withdrawalForm.amount);
-    const availableBalance = getAvailableBalance();
-
+    
+    const amount = parseFloat(withdrawalData.amount);
+    
     if (amount < 3000) {
       toast({
         title: "Minimum withdrawal amount",
-        description: "You can only withdraw ₦3,000 or more.",
+        description: "The minimum withdrawal amount is ₦3,000.",
         variant: "destructive"
       });
       return;
@@ -151,7 +150,7 @@ const Referrals = () => {
     setWithdrawing(true);
 
     try {
-      // Calculate amount after 15% platform fee
+      // Calculate final amount after 15% platform fee
       const platformFee = amount * 0.15;
       const finalAmount = amount - platformFee;
 
@@ -160,31 +159,41 @@ const Referrals = () => {
         .insert({
           user_id: user?.id,
           amount: finalAmount,
-          bank_name: withdrawalForm.bank_name,
-          account_number: withdrawalForm.account_number,
-          account_name: withdrawalForm.account_name,
+          bank_name: withdrawalData.bankName,
+          account_number: withdrawalData.accountNumber,
+          account_name: withdrawalData.accountName,
           status: 'pending'
         });
 
       if (error) throw error;
 
+      // Update earnings status to 'withdrawn'
+      const { error: updateError } = await supabase
+        .from('referral_earnings')
+        .update({ status: 'withdrawn' })
+        .eq('referrer_id', user?.id)
+        .eq('status', 'pending');
+
+      if (updateError) throw updateError;
+
       toast({
         title: "Withdrawal request submitted!",
-        description: `Your request for ₦${finalAmount.toLocaleString()} (after 15% fee) has been submitted for processing.`
+        description: `Your withdrawal of ₦${finalAmount.toFixed(2)} (after 15% fee) has been submitted for processing.`
       });
 
-      setWithdrawalForm({
+      setShowWithdrawForm(false);
+      setWithdrawalData({
         amount: "",
-        bank_name: "",
-        account_number: "",
-        account_name: ""
+        bankName: "",
+        accountNumber: "",
+        accountName: ""
       });
-
-      loadReferralData();
+      
+      loadEarnings();
     } catch (error: any) {
       console.error('Error submitting withdrawal:', error);
       toast({
-        title: "Error submitting withdrawal",
+        title: "Withdrawal failed",
         description: error.message,
         variant: "destructive"
       });
@@ -193,19 +202,9 @@ const Referrals = () => {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN'
-    }).format(amount);
-  };
-
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
-
-  const totalEarnings = getTotalEarnings();
-  const availableBalance = getAvailableBalance();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
@@ -218,8 +217,8 @@ const Referrals = () => {
               Back to Dashboard
             </Button>
             <div className="flex items-center space-x-2">
-              <Gift className="h-6 w-6 text-green-600" />
-              <h1 className="text-xl font-bold text-gray-900">Referral System</h1>
+              <Users className="h-6 w-6 text-green-600" />
+              <h1 className="text-xl font-bold text-gray-900">Referral Program</h1>
             </div>
           </div>
         </div>
@@ -227,49 +226,40 @@ const Referrals = () => {
 
       <div className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(totalEarnings)}
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Earnings</p>
+                  <p className="text-2xl font-bold text-gray-900">₦{totalEarnings.toLocaleString()}</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-green-600" />
               </div>
-              <p className="text-xs text-muted-foreground">
-                From {earnings.length} referrals
-              </p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
-              <Banknote className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {formatCurrency(availableBalance)}
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Available Balance</p>
+                  <p className="text-2xl font-bold text-gray-900">₦{availableBalance.toLocaleString()}</p>
+                </div>
+                <DollarSign className="h-8 w-8 text-blue-600" />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Ready for withdrawal
-              </p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Referrals</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
-                {earnings.length}
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Referrals</p>
+                  <p className="text-2xl font-bold text-gray-900">{earnings.length}</p>
+                </div>
+                <UserCheck className="h-8 w-8 text-purple-600" />
               </div>
-              <p className="text-xs text-muted-foreground">
-                People you've referred
-              </p>
             </CardContent>
           </Card>
         </div>
@@ -277,192 +267,181 @@ const Referrals = () => {
         {/* Referral Link */}
         <Card className="bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Copy className="h-5 w-5" />
-              Your Referral Link
-            </CardTitle>
+            <CardTitle>Your Referral Link</CardTitle>
             <CardDescription>
-              Share this link to earn 10% commission when someone upgrades to a paid plan
+              Share this link to earn 10% of every upgrade made by your referrals
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex gap-2">
               <Input
-                value={`${window.location.origin}/register?ref=${user?.user_metadata?.referral_code || 'LOADING'}`}
+                value={referralLink}
                 readOnly
-                className="flex-1"
+                className="font-mono text-sm"
               />
               <Button onClick={copyReferralLink} className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600">
                 <Copy className="h-4 w-4 mr-2" />
-                Copy Link
+                Copy
               </Button>
             </div>
             <div className="mt-4 p-4 bg-blue-50 rounded-lg">
               <h4 className="font-medium text-blue-900 mb-2">How it works:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
+              <ul className="text-sm text-blue-700 space-y-1">
                 <li>• Share your referral link with friends and family</li>
-                <li>• When they sign up and upgrade to any paid plan, you earn:</li>
-                <li>&nbsp;&nbsp;- Weekly Plan: ₦140 (10% of ₦1,400)</li>
-                <li>&nbsp;&nbsp;- Monthly Plan: ₦450 (10% of ₦4,500)</li>
-                <li>&nbsp;&nbsp;- Yearly Plan: ₦5,000 (10% of ₦50,000)</li>
+                <li>• When they register and upgrade to any paid plan, you earn 10%</li>
+                <li>• Weekly Plan: Earn ₦140 • Monthly Plan: Earn ₦450 • Yearly Plan: Earn ₦5,000</li>
                 <li>• Minimum withdrawal: ₦3,000 (15% platform fee applies)</li>
               </ul>
             </div>
           </CardContent>
         </Card>
 
-        {/* Withdrawal Form */}
-        {availableBalance >= 3000 && (
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Banknote className="h-5 w-5" />
-                Request Withdrawal
-              </CardTitle>
-              <CardDescription>
-                Minimum withdrawal: ₦3,000 (15% platform fee will be deducted)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={submitWithdrawal} className="space-y-4">
+        {/* Withdrawal Section */}
+        <Card className="bg-gradient-to-br from-green-50 to-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Withdraw Earnings
+              {availableBalance >= 3000 && (
+                <Button 
+                  onClick={() => setShowWithdrawForm(!showWithdrawForm)}
+                  className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
+                >
+                  <Banknote className="h-4 w-4 mr-2" />
+                  Withdraw
+                </Button>
+              )}
+            </CardTitle>
+            <CardDescription>
+              Minimum withdrawal amount is ₦3,000. A 15% platform fee will be deducted.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {availableBalance < 3000 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Banknote className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <p>You need at least ₦3,000 to withdraw.</p>
+                <p className="text-sm">Current balance: ₦{availableBalance.toLocaleString()}</p>
+              </div>
+            ) : showWithdrawForm ? (
+              <form onSubmit={handleWithdrawal} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="amount">Amount (₦)</Label>
+                    <Label htmlFor="amount">Withdrawal Amount (₦)</Label>
                     <Input
                       id="amount"
                       type="number"
                       min="3000"
                       max={availableBalance}
-                      value={withdrawalForm.amount}
-                      onChange={(e) => setWithdrawalForm({...withdrawalForm, amount: e.target.value})}
-                      placeholder="3000"
+                      value={withdrawalData.amount}
+                      onChange={(e) => setWithdrawalData({...withdrawalData, amount: e.target.value})}
+                      placeholder="Enter amount"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="bank_name">Bank Name</Label>
+                    <Label htmlFor="bankName">Bank Name</Label>
                     <Input
-                      id="bank_name"
-                      value={withdrawalForm.bank_name}
-                      onChange={(e) => setWithdrawalForm({...withdrawalForm, bank_name: e.target.value})}
-                      placeholder="e.g., GTBank"
+                      id="bankName"
+                      value={withdrawalData.bankName}
+                      onChange={(e) => setWithdrawalData({...withdrawalData, bankName: e.target.value})}
+                      placeholder="Enter bank name"
                       required
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="account_number">Account Number</Label>
+                    <Label htmlFor="accountNumber">Account Number</Label>
                     <Input
-                      id="account_number"
-                      value={withdrawalForm.account_number}
-                      onChange={(e) => setWithdrawalForm({...withdrawalForm, account_number: e.target.value})}
-                      placeholder="0123456789"
+                      id="accountNumber"
+                      value={withdrawalData.accountNumber}
+                      onChange={(e) => setWithdrawalData({...withdrawalData, accountNumber: e.target.value})}
+                      placeholder="Enter account number"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="account_name">Account Name</Label>
+                    <Label htmlFor="accountName">Account Name</Label>
                     <Input
-                      id="account_name"
-                      value={withdrawalForm.account_name}
-                      onChange={(e) => setWithdrawalForm({...withdrawalForm, account_name: e.target.value})}
-                      placeholder="John Doe"
+                      id="accountName"
+                      value={withdrawalData.accountName}
+                      onChange={(e) => setWithdrawalData({...withdrawalData, accountName: e.target.value})}
+                      placeholder="Enter account name"
                       required
                     />
                   </div>
                 </div>
-                <Button 
-                  type="submit" 
-                  disabled={withdrawing}
-                  className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
-                >
-                  {withdrawing ? "Processing..." : "Submit Withdrawal Request"}
-                </Button>
+                {withdrawalData.amount && (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Amount after 15% fee:</strong> ₦{(parseFloat(withdrawalData.amount || '0') * 0.85).toFixed(2)}
+                    </p>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Button 
+                    type="submit" 
+                    disabled={withdrawing}
+                    className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
+                  >
+                    {withdrawing ? "Processing..." : "Submit Withdrawal"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowWithdrawForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </form>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-green-600 font-medium">
+                  You have ₦{availableBalance.toLocaleString()} available for withdrawal
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Earnings History */}
         <Card className="bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Earnings History
-            </CardTitle>
+            <CardTitle>Earnings History</CardTitle>
+            <CardDescription>
+              Track your referral earnings and their status
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {earnings.length === 0 ? (
               <div className="text-center py-8">
-                <Gift className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No earnings yet. Start sharing your referral link!</p>
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No referral earnings yet.</p>
+                <p className="text-sm text-gray-400">Start sharing your referral link to earn rewards!</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {earnings.map((earning) => (
                   <div key={earning.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
                     <div>
-                      <p className="font-medium">
+                      <p className="font-medium">₦{Number(earning.amount).toLocaleString()}</p>
+                      <p className="text-sm text-gray-500">
                         {earning.users?.business_name || earning.users?.email || 'Unknown User'}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        Referred on {new Date(earning.created_at).toLocaleDateString()}
+                      <p className="text-xs text-gray-400">
+                        {new Date(earning.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600">
-                        {formatCurrency(earning.amount)}
-                      </p>
-                      <Badge variant={earning.status === 'paid' ? 'default' : 'secondary'}>
-                        {earning.status}
-                      </Badge>
-                    </div>
+                    <Badge variant={earning.status === 'pending' ? 'default' : earning.status === 'withdrawn' ? 'secondary' : 'outline'}>
+                      {earning.status.charAt(0).toUpperCase() + earning.status.slice(1)}
+                    </Badge>
                   </div>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
-
-        {/* Withdrawal History */}
-        {withdrawals.length > 0 && (
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-            <CardHeader>
-              <CardTitle>Withdrawal History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {withdrawals.map((withdrawal) => (
-                  <div key={withdrawal.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
-                    <div>
-                      <p className="font-medium">{withdrawal.bank_name}</p>
-                      <p className="text-sm text-gray-500">
-                        {withdrawal.account_number} - {withdrawal.account_name}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(withdrawal.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">
-                        {formatCurrency(withdrawal.amount)}
-                      </p>
-                      <Badge 
-                        variant={
-                          withdrawal.status === 'completed' ? 'default' :
-                          withdrawal.status === 'failed' ? 'destructive' : 'secondary'
-                        }
-                      >
-                        {withdrawal.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );

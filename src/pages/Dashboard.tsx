@@ -1,105 +1,115 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  DollarSign,
+  FileText,
+  ListChecks,
+  Users,
+  Wallet,
+  UserCheck,
+  TrendingUp,
+  File,
+  Settings,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  FileText, 
-  Receipt, 
-  Users, 
-  Gift, 
-  TrendingUp, 
-  DollarSign, 
-  AlertCircle,
-  Mic,
-  LogOut,
-  User,
-  Home,
-  CreditCard
-} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+
+interface DashboardStats {
+  totalInvoices: number;
+  pendingInvoices: number;
+  totalExpenses: number;
+  totalPayments: number;
+  referralEarnings?: number;
+}
+
+interface Subscription {
+  tier: string;
+  status: string;
+  end_date: string | null;
+}
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({
-    totalRevenue: 0,
-    totalExpenses: 0,
+  const [stats, setStats] = useState<DashboardStats>({
+    totalInvoices: 0,
     pendingInvoices: 0,
-    totalClients: 0,
-    totalPayments: 0
+    totalExpenses: 0,
+    totalPayments: 0,
+    referralEarnings: 0,
   });
+  const [userData, setUserData] = useState<any>(null);
+  const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [upgrading, setUpgrading] = useState<string | null>(null);
+  const { user } = useAuth();
   const { toast } = useToast();
-  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
-      loadStats();
+      loadDashboardData();
     }
   }, [user]);
 
-  const loadStats = async () => {
+  const loadDashboardData = async () => {
     try {
-      // Load invoices
-      const { data: invoices, error: invoicesError } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('user_id', user?.id);
+      const [invoicesData, expensesData, paymentsData, subscriptionData, userDataResponse] = await Promise.all([
+        supabase.from('invoices').select('*').eq('user_id', user?.id),
+        supabase.from('expenses').select('*').eq('user_id', user?.id),
+        supabase.from('payments').select('*').eq('user_id', user?.id),
+        supabase.from('subscriptions').select('*').eq('user_id', user?.id).single(),
+        supabase.from('users').select('*').eq('id', user?.id).single()
+      ]);
 
-      if (invoicesError) throw invoicesError;
-
-      // Load expenses
-      const { data: expenses, error: expensesError } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('user_id', user?.id);
-
-      if (expensesError) throw expensesError;
-
-      // Load clients
-      const { data: clients, error: clientsError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('user_id', user?.id);
-
-      if (clientsError) throw clientsError;
-
-      // Load payments
-      const { data: payments, error: paymentsError } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('user_id', user?.id);
-
-      if (paymentsError) throw paymentsError;
-
-      // Calculate statistics
-      const totalRevenue = (invoices || [])
-        .filter((inv: any) => inv.status === 'Paid')
-        .reduce((sum: number, inv: any) => sum + Number(inv.amount), 0);
-      
-      const totalExpenses = (expenses || [])
-        .reduce((sum: number, exp: any) => sum + Number(exp.amount), 0);
-      
-      const pendingInvoices = (invoices || [])
-        .filter((inv: any) => inv.status === 'Pending').length;
-
-      const totalPayments = (payments || [])
-        .reduce((sum: number, payment: any) => sum + Number(payment.amount), 0);
+      const invoices = invoicesData.data || [];
+      const expenses = expensesData.data || [];
+      const payments = paymentsData.data || [];
+      const subscription = subscriptionData.data;
+      const userData = userDataResponse.data;
 
       setStats({
-        totalRevenue,
-        totalExpenses,
-        pendingInvoices,
-        totalClients: (clients || []).length,
-        totalPayments
+        totalInvoices: invoices.length,
+        pendingInvoices: invoices.filter(inv => inv.status === 'Pending').length,
+        totalExpenses: expenses.reduce((sum, exp) => sum + Number(exp.amount), 0),
+        totalPayments: payments.reduce((sum, pay) => sum + Number(pay.amount), 0),
       });
+
+      setUserData(userData);
+      setCurrentSubscription(subscription);
+
+      // Load referral earnings if available
+      if (userData?.referral_code) {
+        const { data: earningsData } = await supabase
+          .from('referral_earnings')
+          .select('amount')
+          .eq('referrer_id', user?.id);
+        
+        const totalEarnings = earningsData?.reduce((sum, earning) => sum + Number(earning.amount), 0) || 0;
+        setStats(prev => ({ ...prev, referralEarnings: totalEarnings }));
+      }
+
     } catch (error) {
-      console.error('Error loading stats:', error);
+      console.error('Error loading dashboard data:', error);
       toast({
-        title: "Error loading dashboard data",
-        description: "Please refresh the page to try again.",
+        title: "Error loading dashboard",
+        description: "Please try refreshing the page.",
         variant: "destructive"
       });
     } finally {
@@ -107,315 +117,285 @@ const Dashboard = () => {
     }
   };
 
-  const handleLogout = async () => {
+  const chartData = [
+    { name: 'Jan', invoices: 4000, expenses: 2400 },
+    { name: 'Feb', invoices: 3000, expenses: 1398 },
+    { name: 'Mar', invoices: 2000, expenses: 9800 },
+    { name: 'Apr', invoices: 2780, expenses: 3908 },
+    { name: 'May', invoices: 1890, expenses: 4800 },
+    { name: 'Jun', invoices: 2390, expenses: 3800 },
+    { name: 'Jul', invoices: 3490, expenses: 4300 },
+  ];
+
+  const handleUpgrade = async (tier: string) => {
     try {
-      await signOut();
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out."
+      setUpgrading(tier);
+      
+      const { data, error } = await supabase.functions.invoke('handle-upgrade', {
+        body: { tier, userId: user?.id }
       });
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
+
+      if (error) throw error;
+
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        toast({
+          title: "Upgrade successful!",
+          description: `You've been upgraded to ${tier} plan.`
+        });
+        loadDashboardData();
+      }
+    } catch (error: any) {
+      console.error('Upgrade error:', error);
+      toast({
+        title: "Upgrade failed",
+        description: error.message || "Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setUpgrading(null);
     }
   };
 
-  const copyReferralLink = () => {
-    if (!user) return;
-    
-    const referralLink = `${window.location.origin}/register?ref=${user.user_metadata?.referral_code}`;
-    navigator.clipboard.writeText(referralLink);
-    
-    const rewardAmount = user.user_metadata?.subscription_tier === 'Yearly' ? '₦5,000' : 
-                        user.user_metadata?.subscription_tier === 'Monthly' ? '₦500' : 'no reward';
-    
-    toast({
-      title: "Referral link copied!",
-      description: `Share this link to earn ${rewardAmount} per paid referral. Minimum withdrawal: ₦3,000.`
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN'
-    }).format(amount);
-  };
-
-  if (!user || loading) {
+  if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
-
-  const subscriptionTier = user.user_metadata?.subscription_tier || 'Free';
-  const businessName = user.user_metadata?.business_name || 'Business Owner';
-
-  const isPaidUser = subscriptionTier !== 'Free';
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
-      {/* Header */}
       <header className="bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-blue-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">B</span>
-              </div>
-              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">Bizflow</span>
-            </div>
-            <span className="text-sm sm:text-base text-gray-600 hidden sm:inline">Dashboard</span>
+          <div className="flex items-center space-x-2">
+            <Settings className="h-6 w-6 text-green-600" />
+            <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
           </div>
-          
-          <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
-            <Button variant="ghost" size="sm">
-              <Home className="h-4 w-4 mr-2" />
-              Home
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
-              <User className="h-4 w-4 mr-2" />
+          <div className="flex items-center space-x-4">
+            {userData?.business_name && (
+              <span className="text-gray-700">{userData?.business_name}</span>
+            )}
+            <Button variant="outline" onClick={() => navigate('/profile')}>
               Profile
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </nav>
-
-          <div className="md:hidden">
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto p-4 space-y-6">
-        {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-              Welcome back, {businessName}!
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">
-              Here's what's happening with your business today.
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Badge variant={subscriptionTier === 'Free' ? 'secondary' : 'default'}>
-              {subscriptionTier} Plan
-            </Badge>
-            {subscriptionTier === 'Free' && (
-              <Button size="sm" onClick={() => navigate('/pricing')} className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600">
-                Upgrade
-              </Button>
-            )}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Invoices</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalInvoices}</p>
+                </div>
+                <FileText className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Pending Invoices</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.pendingInvoices}</p>
+                </div>
+                <ListChecks className="h-8 w-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Expenses</p>
+                  <p className="text-2xl font-bold text-gray-900">₦{stats.totalExpenses.toLocaleString()}</p>
+                </div>
+                <Wallet className="h-8 w-8 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Payments</p>
+                  <p className="text-2xl font-bold text-gray-900">₦{stats.totalPayments.toLocaleString()}</p>
+                </div>
+                <DollarSign className="h-8 w-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/invoices')}>
-            <CardContent className="p-3 sm:p-4 text-center">
-              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 mx-auto mb-2" />
-              <h3 className="text-sm sm:text-base font-medium">Create Invoice</h3>
-              <p className="text-xs text-gray-600 hidden sm:block">Quick invoice generation</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/invoices')}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Invoices</p>
+                  <p className="text-lg font-semibold text-gray-900">Manage</p>
+                </div>
+                <FileText className="h-8 w-8 text-green-600" />
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/expenses')}>
-            <CardContent className="p-3 sm:p-4 text-center">
-              <Receipt className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 mx-auto mb-2" />
-              <h3 className="text-sm sm:text-base font-medium">Track Expenses</h3>
-              <p className="text-xs text-gray-600 hidden sm:block">Monitor your spending</p>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/expenses')}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Expenses</p>
+                  <p className="text-lg font-semibold text-gray-900">Track</p>
+                </div>
+                <Wallet className="h-8 w-8 text-orange-600" />
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/clients')}>
-            <CardContent className="p-3 sm:p-4 text-center">
-              <Users className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 mx-auto mb-2" />
-              <h3 className="text-sm sm:text-base font-medium">Manage Clients</h3>
-              <p className="text-xs text-gray-600 hidden sm:block">Customer database</p>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/clients')}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Clients</p>
+                  <p className="text-lg font-semibold text-gray-900">View</p>
+                </div>
+                <Users className="h-8 w-8 text-blue-600" />
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/payments')}>
-            <CardContent className="p-3 sm:p-4 text-center">
-              <CreditCard className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 mx-auto mb-2" />
-              <h3 className="text-sm sm:text-base font-medium">Payments</h3>
-              <p className="text-xs text-gray-600 hidden sm:block">Record & view payments</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Additional Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/transactions')}>
-            <CardContent className="p-4 text-center">
-              <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
-              <h3 className="text-base font-medium">Transaction History</h3>
-              <p className="text-xs text-gray-600">View all money in and out</p>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/payments')}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Payments</p>
+                  <p className="text-lg font-semibold text-gray-900">Record</p>
+                </div>
+                <DollarSign className="h-8 w-8 text-purple-600" />
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/referrals')}>
-            <CardContent className="p-4 text-center">
-              <Gift className="h-8 w-8 text-green-600 mx-auto mb-2" />
-              <h3 className="text-base font-medium">Referral Program</h3>
-              <p className="text-xs text-gray-600">Earn money by referring businesses</p>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/transactions')}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Transactions</p>
+                  <p className="text-lg font-semibold text-gray-900">History</p>
+                </div>
+                <File className="h-8 w-8 text-indigo-600" />
+              </div>
             </CardContent>
           </Card>
 
-          {isPaidUser && (
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/team')}>
-              <CardContent className="p-4 text-center">
-                <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <h3 className="text-base font-medium">Team Management</h3>
-                <p className="text-xs text-gray-600">Manage your salespeople</p>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/referrals')}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Referrals</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    ₦{(stats.referralEarnings || 0).toLocaleString()}
+                  </p>
+                </div>
+                <Users className="h-8 w-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Team Management - Only for paid plans */}
+          {currentSubscription?.tier !== 'Free' && (
+            <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/team')}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Team</p>
+                    <p className="text-lg font-semibold text-gray-900">Manage</p>
+                  </div>
+                  <UserCheck className="h-8 w-8 text-indigo-600" />
+                </div>
               </CardContent>
             </Card>
           )}
-        </div>
 
-        {/* Referral Banner */}
-        {(subscriptionTier === 'Monthly' || subscriptionTier === 'Yearly') && (
-          <Card className="bg-gradient-to-r from-green-100 to-blue-100 border-green-200 cursor-pointer" onClick={copyReferralLink}>
-            <CardContent className="p-4 sm:p-6">
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/profile')}>
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Gift className="h-6 w-6 text-green-600 mr-3" />
-                  <div>
-                    <h3 className="font-medium text-green-900">
-                      Earn {subscriptionTier === 'Yearly' ? '₦5,000' : '₦500'} per referral!
-                    </h3>
-                    <p className="text-sm text-green-700">
-                      Share your referral link and earn when businesses upgrade
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Profile</p>
+                  <p className="text-lg font-semibold text-gray-900">Settings</p>
                 </div>
-                <Button variant="outline" size="sm" className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white border-0">
-                  Copy Link
-                </Button>
+                <Settings className="h-8 w-8 text-gray-600" />
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Analytics Dashboard */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold text-green-600">
-                {formatCurrency(stats.totalRevenue)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                From paid invoices
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold text-blue-600">
-                {formatCurrency(stats.totalPayments)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                All recorded payments
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-              <Receipt className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold text-red-600">
-                {formatCurrency(stats.totalExpenses)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                This month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold text-blue-600">
-                {stats.totalClients}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Active customers
-              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Subscription Status */}
+        {/* Subscription Section */}
         <Card className="bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between text-base sm:text-lg">
-              <span>Subscription Status</span>
-              <Badge variant={subscriptionTier === 'Free' ? 'secondary' : 'default'}>
-                {subscriptionTier} Plan
-              </Badge>
-            </CardTitle>
+            <CardTitle>Subscription</CardTitle>
+            <CardDescription>
+              {currentSubscription?.tier === 'Free'
+                ? 'You are currently on the Free plan.'
+                : `You are on the ${currentSubscription?.tier} plan.`}
+          </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {subscriptionTier === 'Free' && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    You're currently on the Free plan. Upgrade for unlimited features and referral rewards!
+            {currentSubscription?.tier === 'Free' ? (
+              <div className="text-center py-4">
+                <p className="text-green-600 font-medium">
+                  Upgrade to a paid plan to unlock more features!
+                </p>
+                <Button 
+                  className="mt-4 bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
+                  onClick={() => navigate('/pricing')}
+                >
+                  View Pricing
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p>Status: {currentSubscription?.status}</p>
+                {currentSubscription?.end_date && (
+                  <p>
+                    Expires on:{' '}
+                    {new Date(currentSubscription.end_date).toLocaleDateString()}
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-lg font-bold text-green-600">₦4,500</div>
-                      <div className="text-sm text-gray-600">per month</div>
-                      <div className="text-xs text-green-600">₦500/referral</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-green-600">₦50,000</div>
-                      <div className="text-sm text-gray-600">per year</div>
-                      <div className="text-xs text-green-600">₦5,000/referral</div>
-                    </div>
-                  </div>
-                  <Button className="w-full mt-4 bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600" onClick={() => navigate('/pricing')}>
-                    Upgrade Now
-                  </Button>
-                </div>
-              )}
-              
-              {subscriptionTier !== 'Free' && (
-                <div className="text-center">
-                  <p className="text-green-600 font-medium">
-                    ✅ You're on the {subscriptionTier} Plan with unlimited access!
-                  </p>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Earn {subscriptionTier === 'Yearly' ? '₦5,000' : '₦500'} for each business you refer that upgrades to a paid plan
-                  </p>
-                  <Button 
-                    className="mt-4 bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600" 
-                    onClick={() => navigate('/referrals')}
-                  >
-                    View Referral Dashboard
-                  </Button>
-                </div>
-              )}
-            </div>
+                )}
+                <Button 
+                  className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
+                  onClick={() => navigate('/pricing')}
+                >
+                  Manage Subscription
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Charts */}
+        <Card className="bg-gradient-to-br from-green-50 to-blue-50">
+          <CardHeader>
+            <CardTitle>Financial Overview</CardTitle>
+            <CardDescription>Invoices vs Expenses</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="invoices" stroke="#82ca9d" fill="#82ca9d" />
+                <Area type="monotone" dataKey="expenses" stroke="#8884d8" fill="#8884d8" />
+              </AreaChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>

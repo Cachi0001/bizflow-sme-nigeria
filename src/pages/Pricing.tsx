@@ -1,278 +1,226 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const Pricing = () => {
-  const { user } = useAuth();
+  const [upgrading, setUpgrading] = useState<string | null>(null);
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [currentPlan, setCurrentPlan] = useState<string>('Free');
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user) {
-      setCurrentPlan(user.user_metadata?.subscription_tier || 'Free');
-    }
-  }, [user]);
-
-  const isCurrentPlan = (plan: string) => {
-    return currentPlan === plan;
-  };
-
-  const handleUpgrade = async (newPlan: string) => {
-    if (!user) {
-      toast({
-        title: "Not logged in",
-        description: "Please log in to upgrade your plan.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (isCurrentPlan(newPlan)) {
-      toast({
-        title: "Already on this plan",
-        description: `You are already subscribed to the ${newPlan} plan.`,
-        variant: "default"
-      });
-      return;
-    }
-
-    setLoading(true);
-
+  const handleUpgrade = async (tier: string) => {
     try {
-      // Call your upgrade API or function here
-      // For example, call the handle-upgrade function deployed in Supabase Edge Functions
-      const response = await fetch('/.netlify/functions/handle-upgrade', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          currentPlan,
-          newPlan
-        })
+      setUpgrading(tier);
+      // Simulate upgrade process
+      toast({
+        title: "Upgrade initiated",
+        description: `Upgrading to ${tier} plan...`
       });
-
-      const data = await response.json();
-
-      if (data.success) {
+      // Replace with actual upgrade logic
+      setTimeout(() => {
         toast({
-          title: "Upgrade successful",
-          description: data.message || `You have upgraded to the ${newPlan} plan.`,
-          variant: "default"
+          title: "Upgrade successful!",
+          description: `You've been upgraded to ${tier} plan.`
         });
-        setCurrentPlan(newPlan);
-      } else {
-        toast({
-          title: "Upgrade failed",
-          description: data.error || "Failed to upgrade your plan. Please try again.",
-          variant: "destructive"
-        });
-      }
+        setUpgrading(null);
+      }, 2000);
     } catch (error: any) {
       console.error('Upgrade error:', error);
       toast({
         title: "Upgrade failed",
-        description: error.message || "Failed to upgrade your plan. Please try again.",
+        description: error.message || "Please try again later.",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
+      setUpgrading(null);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
+      {/* Header */}
       <header className="bg-white border-b px-4 py-3">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900">Pricing Plans</h1>
-          <p className="mt-2 text-gray-600">Choose the plan that fits your business needs.</p>
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          <h1 className="text-xl font-bold text-gray-900">Pricing Plans</h1>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto">
-          <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">Simple, Transparent Pricing</h2>
-          <p className="mt-4 text-lg text-gray-600">
-            Upgrade anytime to unlock powerful features and referral rewards.
-          </p>
-        </div>
+      {/* Intro */}
+      <div className="max-w-4xl mx-auto text-center py-10">
+        <h2 className="text-3xl font-extrabold text-gray-900">
+          Choose the plan that's right for your business
+        </h2>
+        <p className="mt-4 text-lg text-gray-600">
+          Simple, transparent pricing. Upgrade or downgrade at any time.
+        </p>
+      </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Free Plan */}
-          <Card className={`border ${isCurrentPlan('Free') ? 'border-green-500 shadow-lg' : 'border-gray-200'} bg-gradient-to-br from-green-50 to-blue-50`}>
-            <CardHeader className="text-center pb-8 pt-12">
-              <CardTitle className="text-2xl font-bold text-gray-900">Free Plan</CardTitle>
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold text-gray-900">Free</CardTitle>
               <div className="mt-4">
-                <span className="text-5xl font-bold text-green-600">₦0</span>
-                <span className="text-lg font-medium text-gray-500">/month</span>
+                <span className="text-4xl font-bold text-gray-900">₦0</span>
+                <span className="text-gray-500">/month</span>
               </div>
-              <CardDescription className="mt-4 text-base">
-                Perfect for startups and small businesses
+              <CardDescription className="mt-2">
+                Perfect for getting started
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-8">
-              <ul className="space-y-4 mb-8">
+            <CardContent className="space-y-4">
+              <ul className="space-y-3">
                 <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>Unlimited invoices</span>
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>5 invoices per month</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>Unlimited expense records</span>
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>5 expense records per month</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>Unlimited clients</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
                   <span>Basic reporting</span>
                 </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>Community support</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>Referral link (no earnings)</span>
-                </li>
               </ul>
-              <Button 
-                onClick={() => handleUpgrade('Free')} 
-                disabled={loading || isCurrentPlan('Free')}
-                className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white"
-                size="lg"
-              >
-                {loading ? "Processing..." : isCurrentPlan('Free') ? "Current Plan" : "Choose Free"}
+              <Button className="w-full bg-gray-200 text-gray-700 hover:bg-gray-300">
+                Get Started
               </Button>
             </CardContent>
           </Card>
 
-          {/* Monthly Plan */}
-          <Card className={`border ${isCurrentPlan('Monthly') ? 'border-green-500 shadow-lg' : 'border-gray-200'} bg-gradient-to-br from-green-50 to-blue-50`}>
-            <CardHeader className="text-center pb-8 pt-12">
-              <CardTitle className="text-2xl font-bold text-gray-900">Monthly Plan</CardTitle>
+          {/* Weekly Plan */}
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 shadow-lg hover:shadow-xl transition-shadow border-2 border-green-200">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold text-white">Weekly Plan</CardTitle>
               <div className="mt-4">
-                <span className="text-5xl font-bold text-green-600">₦4,500</span>
-                <span className="text-lg font-medium text-gray-500">/month</span>
+                <span className="text-4xl font-bold text-white">₦1,400</span>
+                <span className="text-gray-200">/week</span>
               </div>
-              <CardDescription className="mt-4 text-base">
-                Ideal for growing businesses
+              <CardDescription className="mt-2 text-gray-100">
+                For short-term projects and freelancers
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-8">
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>6,000 invoices per month</span>
+            <CardContent className="space-y-4">
+              <ul className="space-y-3">
+                <li className="flex items-center text-white">
+                  <Check className="h-5 w-5 text-green-300 mr-2" />
+                  <span>100 invoices per week</span>
                 </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>6,000 expense records per month</span>
+                <li className="flex items-center text-white">
+                  <Check className="h-5 w-5 text-green-300 mr-2" />
+                  <span>100 expense records per week</span>
                 </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
+                <li className="flex items-center text-white">
+                  <Check className="h-5 w-5 text-green-300 mr-2" />
                   <span>Unlimited clients</span>
                 </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
+                <li className="flex items-center text-white">
+                  <Check className="h-5 w-5 text-green-300 mr-2" />
                   <span>Advanced reporting</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>Priority email support</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>₦500 per referral</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>Team management</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>Pro-rata upgrades</span>
                 </li>
               </ul>
               <Button 
-                onClick={() => handleUpgrade('Monthly')} 
-                disabled={loading || isCurrentPlan('Monthly')}
-                className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white"
-                size="lg"
+                className="w-full bg-white text-green-600 hover:bg-green-100"
+                onClick={() => handleUpgrade('Weekly')}
+                disabled={upgrading === 'Weekly'}
               >
-                {loading ? "Processing..." : isCurrentPlan('Monthly') ? "Current Plan" : "Choose Monthly"}
+                {upgrading === 'Weekly' ? 'Processing...' : 'Choose Weekly'}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Yearly Plan */}
-          <Card className="relative border-2 border-green-500 shadow-2xl bg-gradient-to-br from-green-50 to-blue-50">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <span className="bg-gradient-to-r from-green-600 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium">
-                Most Popular
-              </span>
-            </div>
-            <CardHeader className="text-center pb-8 pt-12">
+          {/* Yearly Plan - Updated limits */}
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-gray-900">Yearly Plan</CardTitle>
               <div className="mt-4">
-                <span className="text-5xl font-bold text-green-600">₦50,000</span>
-                <span className="text-lg font-medium text-gray-500">/year</span>
+                <span className="text-4xl font-bold text-gray-900">₦50,000</span>
+                <span className="text-gray-500">/year</span>
               </div>
-              <CardDescription className="mt-4 text-base">
+              <CardDescription className="mt-2">
                 Best value for growing businesses
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-8">
-              <ul className="space-y-4 mb-8">
+            <CardContent className="space-y-4">
+              <ul className="space-y-3">
                 <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
                   <span>6,000 invoices per year</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
                   <span>6,000 expense records per year</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
                   <span>Unlimited clients</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
                   <span>Advanced reporting</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>Priority email support</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>₦5,000 per referral</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
                   <span>Team management</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="h-5 w-5 text-green-500 mr-3" />
-                  <span>Pro-rata upgrades</span>
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>Priority support</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>Data export</span>
                 </li>
               </ul>
               <Button 
-                onClick={() => handleUpgrade('Yearly')} 
-                disabled={loading || isCurrentPlan('Yearly')}
                 className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white"
-                size="lg"
+                onClick={() => handleUpgrade('Yearly')}
+                disabled={upgrading === 'Yearly'}
               >
-                {loading ? "Processing..." : isCurrentPlan('Yearly') ? "Current Plan" : "Choose Yearly"}
+                {upgrading === 'Yearly' ? 'Processing...' : 'Choose Yearly'}
               </Button>
             </CardContent>
           </Card>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">
+                What payment methods do you accept?
+              </h3>
+              <p className="text-gray-600">
+                We accept all major credit cards, as well as payments through PayPal.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">
+                Can I change my plan later?
+              </h3>
+              <p className="text-gray-600">
+                Yes, you can upgrade or downgrade your plan at any time. The changes will take effect immediately.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">
+                Is there a discount for annual subscriptions?
+              </h3>
+              <p className="text-gray-600">
+                Yes, our yearly plan offers a significant discount compared to the monthly plans.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

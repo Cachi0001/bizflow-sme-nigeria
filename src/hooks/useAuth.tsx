@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: `https://bizflow-sme-nigeria.lovable.app/dashboard`,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             phone: phone?.trim() || '',
             business_name: businessName?.trim() || '',
