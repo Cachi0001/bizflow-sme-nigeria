@@ -24,7 +24,7 @@ const Pricing = () => {
       setTimeout(() => {
         toast({
           title: "Upgrade successful!",
-          description: `You\'ve been upgraded to ${tier} plan.`
+          description: `You\"ve been upgraded to ${tier} plan.`
         });
         setUpgrading(null);
       }, 2000);
@@ -55,7 +55,7 @@ const Pricing = () => {
       {/* Intro */}
       <div className="max-w-4xl mx-auto text-center py-10">
         <h2 className="text-3xl font-extrabold text-gray-900">
-          Choose the plan that\'s right for your business
+          Choose the plan that\"s right for your business
         </h2>
         <p className="mt-4 text-lg text-gray-600">
           Simple, transparent pricing. Upgrade or downgrade at any time.
@@ -93,6 +93,47 @@ const Pricing = () => {
               </ul>
               <Button className="w-full bg-gray-200 text-gray-700 hover:bg-gray-300">
                 Get Started
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Weekly Plan */}
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 shadow-lg hover:shadow-xl transition-shadow border-2 border-green-200">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold text-gray-900">Weekly Plan</CardTitle>
+              <div className="mt-4">
+                <span className="text-4xl font-bold text-gray-900">₦1,400</span>
+                <span className="text-gray-500">/week</span>
+              </div>
+              <CardDescription className="mt-2">
+                For short-term projects and freelancers
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ul className="space-y-3">
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>100 invoices per week</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>100 expense records per week</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>Unlimited clients</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>Advanced reporting</span>
+                </li>
+              </ul>
+              <Button 
+                className="w-full bg-white text-green-600 hover:bg-green-100"
+                onClick={() => handleUpgrade("Weekly")}
+                disabled={upgrading === "Weekly"}
+              >
+                {upgrading === "Weekly" ? "Processing..." : "Choose Weekly"}
               </Button>
             </CardContent>
           </Card>
