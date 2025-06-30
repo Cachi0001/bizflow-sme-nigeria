@@ -13,14 +13,14 @@ const Features = () => {
       title: "Invoice Management",
       description: "Create professional invoices quick quick, track payments, and send reminders to customers wey never pay.",
       freePlan: "5 invoices per month",
-      silverPlan: "Unlimited invoices with custom branding"
+      silverPlan: "450 invoices per month with custom branding"
     },
     {
       icon: <Receipt className="h-8 w-8 text-green-600" />,
       title: "Expense Tracking", 
       description: "Monitor all your business expenses, categorize spending, and get monthly summaries to know where your money dey go.",
       freePlan: "10 expenses per month", 
-      silverPlan: "Unlimited expenses with advanced categorization"
+      silverPlan: "450 expenses with advanced categorization"
     },
     {
       icon: <Users className="h-8 w-8 text-green-600" />,
@@ -60,9 +60,9 @@ const Features = () => {
     {
       icon: <Mic className="h-8 w-8 text-green-600" />,
       title: "Voice Commands",
-      description: "Control your business with voice commands - create invoices, check expenses, all by speaking (coming soon).",
+      description: "Control your business with voice commands, - create invoices, check expenses, all by speaking (coming soon).",
       freePlan: "Not available",
-      silverPlan: "Coming soon"
+      silverPlan: "Not available"
     }
   ];
 

@@ -188,7 +188,7 @@ const Clients = () => {
             <CardHeader>
               <CardTitle>Add New Client</CardTitle>
               <CardDescription>
-                Fill in the client details to add them to your contact list
+                Fill in the client details 
               </CardDescription>
             </CardHeader>
             <CardContent>

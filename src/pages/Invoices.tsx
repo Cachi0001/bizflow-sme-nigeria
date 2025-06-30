@@ -38,6 +38,10 @@ const Invoices = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  // Changed: Updated editingInvoice type from boolean to Invoice | null to store the invoice object
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null); // Changed: Corrected type
+  const [saving, setSaving] = useState(false); 
   const [formData, setFormData] = useState({
     client_name: "",
     amount: "",
@@ -119,6 +123,83 @@ const Invoices = () => {
       });
     } finally {
       setCreating(false);
+    }
+  };
+
+  // Changed: Updated handleEditInvoice to set the invoice object and show the form correctly
+  const handleEditInvoice = (invoiceId: string) => {
+    const invoiceToEdit = invoices.find(inv => inv.id === invoiceId);
+    if (invoiceToEdit) {
+      setEditingInvoice(invoiceToEdit); // Changed: Set the invoice object instead of true
+      setFormData({
+        client_name: invoiceToEdit.client_name,
+        amount: invoiceToEdit.amount.toString(),
+        due_date: invoiceToEdit.due_date,
+        notes: invoiceToEdit.notes || "",
+        status: invoiceToEdit.status || "Pending"
+      });
+      setShowEditForm(true); // Changed: Moved from inside if to ensure form shows
+    }
+  };
+
+  // Changed: Added validation and ensured state reset on success
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingInvoice) return;
+
+    const amountNum = parseFloat(formData.amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid positive amount.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const dueDate = new Date(formData.due_date);
+    if (dueDate < new Date()) {
+      toast({
+        title: "Invalid Date",
+        description: "Due date cannot be in the past.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({
+          client_name: formData.client_name,
+          amount: amountNum,
+          due_date: formData.due_date,
+          notes: formData.notes,
+          status: formData.status
+        })
+        .eq('id', editingInvoice.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Invoice updated!",
+        description: `Invoice for ${formData.client_name} has been updated successfully.`
+      });
+
+      setShowEditForm(false);
+      setEditingInvoice(null);
+      loadInvoices(); 
+    } catch (error) {
+      console.error('Error updating invoice:', error);
+      toast({
+        title: "Failed to update invoice",
+        description: "Please try again or check your connection.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -328,13 +409,132 @@ const Invoices = () => {
           </Card>
         )}
 
+        // Changed: Moved edit form outside the invoice list for proper rendering
+        {showEditForm && editingInvoice && (
+          <Card className="shadow-lg border-0 relative">
+            // Changed: Added loading overlay during save
+            {saving && (
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              </div>
+            )}
+            <CardHeader>
+              <CardTitle>Edit Invoice</CardTitle>
+              <CardDescription>Update the details for {editingInvoice.client_name}'s invoice</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSaveEdit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_client_name" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <User className="h-4 w-4" /> Client Name *
+                    </Label>
+                    <Input
+                      id="edit_client_name"
+                      type="text"
+                      value={formData.client_name}
+                      onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                      className="h-11 text-base"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_amount" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" /> Amount (₦) *
+                    </Label>
+                    <Input
+                      id="edit_amount"
+                      type="number"
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                      className="h-11 text-base"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_due_date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" /> Due Date *
+                    </Label>
+                    <Input
+                      id="edit_due_date"
+                      type="date"
+                      value={formData.due_date}
+                      onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                      className="h-11 text-base"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit_status" className="text-sm font-medium text-gray-700">
+                      Status
+                    </Label>
+                    <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Paid">Paid</SelectItem>
+                        <SelectItem value="Overdue">Overdue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_notes" className="text-sm font-medium text-gray-700">
+                    Notes (Optional)
+                  </Label>
+                  <Textarea
+                    id="edit_notes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    className="min-h-[100px]"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                  <Button
+                    type="submit"
+                    className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Save Changes
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowEditForm(false);
+                      setEditingInvoice(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Invoices List */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
               Your Invoices ({invoices.length})
             </h2>
-            {!showCreateForm && (
+            {!showCreateForm && !showEditForm && (
               <Button 
                 onClick={() => setShowCreateForm(true)}
                 className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
@@ -344,7 +544,6 @@ const Invoices = () => {
               </Button>
             )}
           </div>
-
           {invoices.length === 0 ? (
             <Card className="shadow-lg border-0">
               <CardContent className="py-12 text-center">
@@ -381,17 +580,14 @@ const Invoices = () => {
                         {formatCurrency(invoice.amount)}
                       </span>
                     </div>
-                    
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Due Date:</span>
                       <span className="font-medium">{formatDate(invoice.due_date)}</span>
                     </div>
-                    
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Created:</span>
                       <span className="text-sm text-gray-500">{formatDate(invoice.created_at)}</span>
                     </div>
-                    
                     {invoice.notes && (
                       <div className="pt-2 border-t">
                         <p className="text-sm text-gray-600 truncate" title={invoice.notes}>
@@ -399,13 +595,19 @@ const Invoices = () => {
                         </p>
                       </div>
                     )}
-                    
                     <div className="flex items-center gap-2 pt-3">
                       <Button variant="outline" size="sm" className="flex-1">
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
+                      // Changed: Added onClick to trigger edit functionality
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleEditInvoice(invoice.id)}
+                        disabled={showEditForm} // Changed: Disable while editing
+                      >
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
