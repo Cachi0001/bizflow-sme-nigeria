@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client"; // Added: Import supabase for database checks
+
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -27,6 +29,56 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+     // Added: Check if email or phone already exists in the database
+    try {
+      const { data: emailCheck, error: emailError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', formData.email)
+        .single();
+
+      if (emailError && emailError.code !== 'PGRST116') { // PGRST116 means no rows found, which is okay
+        throw emailError;
+      }
+      if (emailCheck) {
+        toast({
+          title: "Email Already Exists",
+          description: "This email is already registered. Please use a different one or log in.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      const { data: phoneCheck, error: phoneError } = await supabase
+        .from('users')
+        .select('phone')
+        .eq('phone', formData.phone)
+        .single();
+
+      if (phoneError && phoneError.code !== 'PGRST116') {
+        throw phoneError;
+      }
+      if (phoneCheck) {
+        toast({
+          title: "Phone Number Already Exists",
+          description: "This phone number is already registered. Please use a different one.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking existing credentials:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while checking credentials. Please try again.",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
 
     if (!formData.email || !formData.password) {
       toast({
