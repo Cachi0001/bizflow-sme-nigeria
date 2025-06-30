@@ -247,6 +247,25 @@ const Dashboard = () => {
           </Card>
         </div>
 
+        {/* Additional Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/transactions')}>
+            <CardContent className="p-4 text-center">
+              <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
+              <h3 className="text-base font-medium">Transaction History</h3>
+              <p className="text-xs text-gray-600">View all money in and out</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/referrals')}>
+            <CardContent className="p-4 text-center">
+              <Gift className="h-8 w-8 text-green-600 mx-auto mb-2" />
+              <h3 className="text-base font-medium">Referral Program</h3>
+              <p className="text-xs text-gray-600">Earn money by referring businesses</p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Referral Banner */}
         {(subscriptionTier === 'Monthly' || subscriptionTier === 'Yearly') && (
           <Card className="bg-gradient-to-r from-green-100 to-blue-100 border-green-200 cursor-pointer" onClick={copyReferralLink}>
@@ -263,7 +282,7 @@ const Dashboard = () => {
                     </p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white border-0">
                   Copy Link
                 </Button>
               </div>
@@ -334,27 +353,6 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Transaction History Button */}
-        <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between text-base sm:text-lg">
-              <span>Transaction History</span>
-              <TrendingUp className="h-5 w-5 text-green-600" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-4">
-              View all your money in and money out transactions in one place
-            </p>
-            <Button 
-              onClick={() => navigate('/transactions')} 
-              className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
-            >
-              View Transaction History
-            </Button>
-          </CardContent>
-        </Card>
-
         {/* Subscription Status */}
         <Card className="bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader>
@@ -398,6 +396,12 @@ const Dashboard = () => {
                   <p className="text-sm text-gray-600 mt-2">
                     Earn {subscriptionTier === 'Yearly' ? '₦5,000' : '₦500'} for each business you refer that upgrades to a paid plan
                   </p>
+                  <Button 
+                    className="mt-4 bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600" 
+                    onClick={() => navigate('/referrals')}
+                  >
+                    View Referral Dashboard
+                  </Button>
                 </div>
               )}
             </div>
