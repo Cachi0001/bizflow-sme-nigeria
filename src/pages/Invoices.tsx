@@ -22,6 +22,17 @@ import {
   Trash2,
   Eye
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Invoice {
   id: string;
@@ -40,7 +51,8 @@ const Invoices = () => {
   const [creating, setCreating] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const [saving, setSaving] = useState(false); 
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     client_name: "",
     amount: "",
@@ -85,17 +97,54 @@ const Invoices = () => {
     e.preventDefault();
     setCreating(true);
 
+    // Validate due date only if status is Pending
+    if (formData.status === "Pending" && !formData.due_date) {
+      toast({
+        title: "Due date required",
+        description: "Due date is required for pending invoices",
+        variant: "destructive"
+      });
+      setCreating(false);
+      return;
+    }
+
+    // Validate future date for pending invoices
+    if (formData.status === "Pending" && formData.due_date) {
+      const dueDate = new Date(formData.due_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (dueDate < today) {
+        toast({
+          title: "Invalid due date",
+          description: "Due date cannot be in the past",
+          variant: "destructive"
+        });
+        setCreating(false);
+        return;
+      }
+    }
+
     try {
+      const invoiceData: any = {
+        user_id: user?.id,
+        client_name: formData.client_name,
+        amount: parseFloat(formData.amount),
+        notes: formData.notes,
+        status: formData.status
+      };
+
+      // Only add due_date if status is Pending
+      if (formData.status === "Pending") {
+        invoiceData.due_date = formData.due_date;
+      } else {
+        // Set due_date to today for non-pending invoices
+        invoiceData.due_date = new Date().toISOString().split('T')[0];
+      }
+
       const { error } = await supabase
         .from('invoices')
-        .insert({
-          user_id: user?.id,
-          client_name: formData.client_name,
-          amount: parseFloat(formData.amount),
-          due_date: formData.due_date,
-          notes: formData.notes,
-          status: formData.status
-        });
+        .insert(invoiceData);
 
       if (error) throw error;
 
@@ -154,28 +203,53 @@ const Invoices = () => {
       return;
     }
 
-    const dueDate = new Date(formData.due_date);
-    if (dueDate < new Date()) {
+    // Validate due date only if status is Pending
+    if (formData.status === "Pending" && !formData.due_date) {
       toast({
-        title: "Invalid Date",
-        description: "Due date cannot be in the past.",
+        title: "Due date required",
+        description: "Due date is required for pending invoices",
         variant: "destructive"
       });
       return;
     }
 
+    // Validate future date for pending invoices
+    if (formData.status === "Pending" && formData.due_date) {
+      const dueDate = new Date(formData.due_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (dueDate < today) {
+        toast({
+          title: "Invalid due date",
+          description: "Due date cannot be in the past",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     setSaving(true);
 
     try {
+      const updateData: any = {
+        client_name: formData.client_name,
+        amount: amountNum,
+        notes: formData.notes,
+        status: formData.status
+      };
+
+      // Only update due_date if status is Pending
+      if (formData.status === "Pending") {
+        updateData.due_date = formData.due_date;
+      } else {
+        // Keep existing due_date for non-pending invoices or set to today
+        updateData.due_date = new Date().toISOString().split('T')[0];
+      }
+
       const { error } = await supabase
         .from('invoices')
-        .update({
-          client_name: formData.client_name,
-          amount: amountNum,
-          due_date: formData.due_date,
-          notes: formData.notes,
-          status: formData.status
-        })
+        .update(updateData)
         .eq('id', editingInvoice.id);
 
       if (error) throw error;
@@ -197,6 +271,34 @@ const Invoices = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    setDeleting(invoiceId);
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Invoice deleted",
+        description: "Invoice has been deleted successfully."
+      });
+
+      loadInvoices();
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      toast({
+        title: "Failed to delete invoice",
+        description: "Please try again or check your connection.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -224,11 +326,15 @@ const Invoices = () => {
     }
   };
 
+  const getTodayDate = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center">
         <div className="flex items-center gap-2">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <Loader2 className="h-6 w-6 animate-spin text-green-600" />
           <span className="text-gray-600">Loading invoices...</span>
         </div>
       </div>
@@ -236,7 +342,7 @@ const Invoices = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -251,17 +357,17 @@ const Invoices = () => {
             </Button>
             
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-blue-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">B</span>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">
                 Bizflow
               </span>
             </div>
             
             <Button 
               onClick={() => setShowCreateForm(true)}
-              className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+              className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
             >
               <Plus className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">New Invoice</span>
@@ -273,8 +379,8 @@ const Invoices = () => {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Page Header */}
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-orange-100 rounded-full flex items-center justify-center mx-auto">
-            <FileText className="h-8 w-8 text-blue-600" />
+          <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-blue-100 rounded-full flex items-center justify-center mx-auto">
+            <FileText className="h-8 w-8 text-green-600" />
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Invoice Management</h1>
@@ -330,21 +436,6 @@ const Invoices = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <Label htmlFor="due_date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Due Date *
-                    </Label>
-                    <Input
-                      id="due_date"
-                      type="date"
-                      value={formData.due_date}
-                      onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                      className="h-11 text-base"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="status" className="text-sm font-medium text-gray-700">
                       Status
                     </Label>
@@ -359,6 +450,24 @@ const Invoices = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {formData.status === "Pending" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="due_date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Due Date *
+                      </Label>
+                      <Input
+                        id="due_date"
+                        type="date"
+                        value={formData.due_date}
+                        onChange={(e) => setFormData({...formData, due_date: e.target.value})}
+                        min={getTodayDate()}
+                        className="h-11 text-base"
+                        required
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -377,7 +486,7 @@ const Invoices = () => {
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <Button 
                     type="submit" 
-                    className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                    className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
                     disabled={creating}
                   >
                     {creating ? (
@@ -411,7 +520,7 @@ const Invoices = () => {
           <Card className="shadow-lg border-0 relative">
             {saving && (
               <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <Loader2 className="h-6 w-6 animate-spin text-green-600" />
               </div>
             )}
             <CardHeader>
@@ -451,19 +560,6 @@ const Invoices = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <Label htmlFor="edit_due_date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" /> Due Date *
-                    </Label>
-                    <Input
-                      id="edit_due_date"
-                      type="date"
-                      value={formData.due_date}
-                      onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                      className="h-11 text-base"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="edit_status" className="text-sm font-medium text-gray-700">
                       Status
                     </Label>
@@ -478,6 +574,22 @@ const Invoices = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  {formData.status === "Pending" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="edit_due_date" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" /> Due Date *
+                      </Label>
+                      <Input
+                        id="edit_due_date"
+                        type="date"
+                        value={formData.due_date}
+                        onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                        min={getTodayDate()}
+                        className="h-11 text-base"
+                        required
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit_notes" className="text-sm font-medium text-gray-700">
@@ -493,7 +605,7 @@ const Invoices = () => {
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <Button
                     type="submit"
-                    className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                    className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
                     disabled={saving}
                   >
                     {saving ? (
@@ -533,7 +645,7 @@ const Invoices = () => {
             {!showCreateForm && !showEditForm && (
               <Button 
                 onClick={() => setShowCreateForm(true)}
-                className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Invoice
@@ -550,7 +662,7 @@ const Invoices = () => {
                 </p>
                 <Button 
                   onClick={() => setShowCreateForm(true)}
-                  className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                  className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Your First Invoice
@@ -606,6 +718,36 @@ const Invoices = () => {
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                            {deleting === invoice.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete the invoice for {invoice.client_name}? 
+                              This action cannot be undone and will permanently remove the invoice 
+                              worth {formatCurrency(invoice.amount)}.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteInvoice(invoice.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete Invoice
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </CardContent>
                 </Card>
