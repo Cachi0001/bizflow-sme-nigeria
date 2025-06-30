@@ -27,7 +27,7 @@ interface Invoice {
   id: string;
   client_name: string;
   amount: number;
-  status: string | null; // Changed from union type to string | null to match database
+  status: string | null;
   due_date: string;
   notes?: string;
   created_at: string;
@@ -38,16 +38,15 @@ const Invoices = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  // Changed: Updated editingInvoice type from boolean to Invoice | null to store the invoice object
   const [showEditForm, setShowEditForm] = useState(false);
-  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null); // Changed: Corrected type
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [saving, setSaving] = useState(false); 
   const [formData, setFormData] = useState({
     client_name: "",
     amount: "",
     due_date: "",
     notes: "",
-    status: "Pending" as const
+    status: "Pending"
   });
 
   const navigate = useNavigate();
@@ -126,11 +125,10 @@ const Invoices = () => {
     }
   };
 
-  // Changed: Updated handleEditInvoice to set the invoice object and show the form correctly
   const handleEditInvoice = (invoiceId: string) => {
     const invoiceToEdit = invoices.find(inv => inv.id === invoiceId);
     if (invoiceToEdit) {
-      setEditingInvoice(invoiceToEdit); // Changed: Set the invoice object instead of true
+      setEditingInvoice(invoiceToEdit);
       setFormData({
         client_name: invoiceToEdit.client_name,
         amount: invoiceToEdit.amount.toString(),
@@ -138,11 +136,10 @@ const Invoices = () => {
         notes: invoiceToEdit.notes || "",
         status: invoiceToEdit.status || "Pending"
       });
-      setShowEditForm(true); // Changed: Moved from inside if to ensure form shows
+      setShowEditForm(true);
     }
   };
 
-  // Changed: Added validation and ensured state reset on success
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingInvoice) return;
@@ -351,7 +348,7 @@ const Invoices = () => {
                     <Label htmlFor="status" className="text-sm font-medium text-gray-700">
                       Status
                     </Label>
-                    <Select value={formData.status} onValueChange={(value: any) => setFormData({...formData, status: value})}>
+                    <Select value={formData.status} onValueChange={(value: string) => setFormData({...formData, status: value})}>
                       <SelectTrigger className="h-11">
                         <SelectValue />
                       </SelectTrigger>
@@ -409,10 +406,9 @@ const Invoices = () => {
           </Card>
         )}
 
-        // Changed: Moved edit form outside the invoice list for proper rendering
+        {/* Edit Form */}
         {showEditForm && editingInvoice && (
           <Card className="shadow-lg border-0 relative">
-            // Changed: Added loading overlay during save
             {saving && (
               <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
@@ -471,7 +467,7 @@ const Invoices = () => {
                     <Label htmlFor="edit_status" className="text-sm font-medium text-gray-700">
                       Status
                     </Label>
-                    <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                    <Select value={formData.status} onValueChange={(value: string) => setFormData({ ...formData, status: value })}>
                       <SelectTrigger className="h-11">
                         <SelectValue />
                       </SelectTrigger>
@@ -600,13 +596,12 @@ const Invoices = () => {
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
-                      // Changed: Added onClick to trigger edit functionality
                       <Button
                         variant="outline"
                         size="sm"
                         className="flex-1"
                         onClick={() => handleEditInvoice(invoice.id)}
-                        disabled={showEditForm} // Changed: Disable while editing
+                        disabled={showEditForm}
                       >
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
