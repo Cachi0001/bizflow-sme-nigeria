@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Changed: Added useEffect for auth state listening
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,14 @@ const Login = () => {
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn, resetPassword } = useAuth();
+  const { signIn, resetPassword, user } = useAuth(); // Changed: Added user to access auth state
+
+  // Added: Listen for auth state changes to navigate to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +38,10 @@ const Login = () => {
 
     try {
       const { error } = await signIn(formData.phoneOrEmail, formData.password);
-      if (!error) {
-        navigate('/dashboard');
+      if (error) {
+        console.error('Login error:', error.message);
       }
+      // Note: Navigation is now handled by useEffect based on user state
     } catch (error) {
       console.error('Login error:', error);
     } finally {
