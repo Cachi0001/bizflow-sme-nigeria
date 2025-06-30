@@ -63,9 +63,9 @@ const Pricing = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Free Plan */}
-          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="bg-gradient-to-br from-gray-50 to-gray-100 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-gray-900">Free</CardTitle>
               <div className="mt-4">
@@ -91,15 +91,20 @@ const Pricing = () => {
                   <span>Basic reporting</span>
                 </li>
               </ul>
-              <Button className="w-full bg-gray-200 text-gray-700 hover:bg-gray-300">
+              <Button className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white">
                 Get Started
               </Button>
             </CardContent>
           </Card>
 
           {/* Weekly Plan */}
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50 shadow-lg hover:shadow-xl transition-shadow border-2 border-green-200">
-            <CardHeader className="text-center">
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 shadow-lg hover:shadow-xl transition-shadow border-2 border-green-200 relative">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <span className="bg-gradient-to-r from-green-600 to-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                7-Day Free Trial
+              </span>
+            </div>
+            <CardHeader className="text-center pt-8">
               <CardTitle className="text-2xl font-bold text-gray-900">Weekly Plan</CardTitle>
               <div className="mt-4">
                 <span className="text-4xl font-bold text-gray-900">₦1,400</span>
@@ -127,19 +132,23 @@ const Pricing = () => {
                   <Check className="h-5 w-5 text-green-500 mr-2" />
                   <span>Advanced reporting</span>
                 </li>
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>Sales report downloads</span>
+                </li>
               </ul>
               <Button 
-                className="w-full bg-white text-green-600 hover:bg-green-100"
+                className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white"
                 onClick={() => handleUpgrade("Weekly")}
                 disabled={upgrading === "Weekly"}
               >
-                {upgrading === "Weekly" ? "Processing..." : "Choose Weekly"}
+                {upgrading === "Weekly" ? "Processing..." : "Start Free Trial"}
               </Button>
             </CardContent>
           </Card>
 
           {/* Monthly Plan */}
-          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-gray-900">Monthly Plan</CardTitle>
               <div className="mt-4">
@@ -170,7 +179,11 @@ const Pricing = () => {
                 </li>
                 <li className="flex items-center">
                   <Check className="h-5 w-5 text-green-500 mr-2" />
-                  <span>₦500 referral rewards</span>
+                  <span>Sales report downloads</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>₦450 referral rewards</span>
                 </li>
               </ul>
               <Button 
@@ -184,7 +197,7 @@ const Pricing = () => {
           </Card>
 
           {/* Yearly Plan */}
-          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-gray-900">Yearly Plan</CardTitle>
               <div className="mt-4">
@@ -215,6 +228,10 @@ const Pricing = () => {
                 </li>
                 <li className="flex items-center">
                   <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span>Sales report downloads</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
                   <span>Team management</span>
                 </li>
                 <li className="flex items-center">
@@ -223,7 +240,7 @@ const Pricing = () => {
                 </li>
                 <li className="flex items-center">
                   <Check className="h-5 w-5 text-green-500 mr-2" />
-                  <span>Data export</span>
+                  <span>₦5,000 referral rewards</span>
                 </li>
               </ul>
               <Button 

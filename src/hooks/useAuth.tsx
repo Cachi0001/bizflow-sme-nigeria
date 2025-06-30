@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             phone: phone?.trim() || '',
             business_name: businessName?.trim() || '',
             role: 'Owner',
-            subscription_tier: 'Free',
+            subscription_tier: 'Weekly', // Start with Weekly tier for 7-day trial
             referral_code: referralCode || ''
           }
         }
@@ -85,12 +85,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (data.user && !data.user.email_confirmed_at) {
         toast({
           title: "Check your email!",
-          description: "We sent you a confirmation link. Please check your email and click the link to activate your account."
+          description: "We sent you a confirmation link. Your 7-day free trial will start once you verify your email."
         });
       } else {
         toast({
-          title: "Account created successfully!",
-          description: "Welcome to Bizflow. You can now start managing your business."
+          title: "Welcome to Bizflow!",
+          description: "Your 7-day free trial has started. Enjoy full access to all Weekly plan features!"
         });
       }
 

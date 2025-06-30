@@ -102,6 +102,27 @@ serve(async (req) => {
         })
         .eq('id', userId);
 
+      // Process referral earnings if applicable (for free upgrades)
+      try {
+        const { error: referralError } = await supabaseClient.functions.invoke('process-referral-upgrade', {
+          body: { 
+            userId: userId, 
+            subscriptionTier: newPlan,
+            amount: finalAmount / 100 // Convert from kobo to naira
+          }
+        })
+        
+        if (referralError) {
+          console.error('Error processing referral:', referralError)
+          // Don't fail the upgrade if referral processing fails
+        } else {
+          console.log('Referral processing completed successfully')
+        }
+      } catch (referralError) {
+        console.error('Error calling referral function:', referralError)
+        // Don't fail the upgrade if referral processing fails
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
