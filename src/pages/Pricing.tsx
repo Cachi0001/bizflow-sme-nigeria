@@ -188,7 +188,7 @@ const Pricing = () => {
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-gray-900">Yearly Plan</CardTitle>
               <div className="mt-4">
-                <span className="text-4xl font-bold text-gray-900">₦6,000</span>
+                <span className="text-4xl font-bold text-gray-900">₦50,000</span>
                 <span className="text-gray-500">/year</span>
               </div>
               <CardDescription className="mt-2">
@@ -254,7 +254,8 @@ const Pricing = () => {
                 Can I change my plan later?
               </h3>
               <p className="text-gray-600">
-                Yes, you can upgrade or downgrade your plan at any time. The changes will take effect immediately.
+                Yes, you can upgrade your plan at any time.
+                The changes will take effect immediately.
               </p>
             </div>
             <div>
