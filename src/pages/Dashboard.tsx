@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,6 +149,8 @@ const Dashboard = () => {
   const subscriptionTier = user.user_metadata?.subscription_tier || 'Free';
   const businessName = user.user_metadata?.business_name || 'Business Owner';
 
+  const isPaidUser = subscriptionTier !== 'Free';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       {/* Header */}
@@ -248,7 +249,7 @@ const Dashboard = () => {
         </div>
 
         {/* Additional Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/transactions')}>
             <CardContent className="p-4 text-center">
               <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
@@ -264,6 +265,16 @@ const Dashboard = () => {
               <p className="text-xs text-gray-600">Earn money by referring businesses</p>
             </CardContent>
           </Card>
+
+          {isPaidUser && (
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-blue-50" onClick={() => navigate('/team')}>
+              <CardContent className="p-4 text-center">
+                <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <h3 className="text-base font-medium">Team Management</h3>
+                <p className="text-xs text-gray-600">Manage your salespeople</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Referral Banner */}

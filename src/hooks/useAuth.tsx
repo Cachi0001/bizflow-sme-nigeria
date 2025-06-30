@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (phone: string, email: string, password: string, businessName?: string) => Promise<any>;
+  signUp: (phone: string, email: string, password: string, businessName?: string, referralCode?: string) => Promise<any>;
   signIn: (phoneOrEmail: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<any>;
@@ -53,13 +52,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const signUp = async (phone: string, email: string, password: string, businessName?: string) => {
+  const signUp = async (phone: string, email: string, password: string, businessName?: string, referralCode?: string) => {
     try {
       if (!email || !password) {
         throw new Error("Email and password are required");
       }
 
-      console.log('Attempting signup with:', { email, phone, businessName });
+      console.log('Attempting signup with:', { email, phone, businessName, referralCode });
 
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -70,7 +69,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             phone: phone?.trim() || '',
             business_name: businessName?.trim() || '',
             role: 'Owner',
-            subscription_tier: 'Free'
+            subscription_tier: 'Free',
+            referral_code: referralCode || ''
           }
         }
       });

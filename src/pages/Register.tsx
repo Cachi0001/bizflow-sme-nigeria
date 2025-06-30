@@ -111,11 +111,16 @@ const Register = () => {
     }
 
     try {
+      // Get referral code from URL if present
+      const urlParams = new URLSearchParams(window.location.search);
+      const referralCode = urlParams.get('ref');
+
       const { error } = await signUp(
         formData.phone || '', 
         formData.email, 
         formData.password, 
-        formData.businessName
+        formData.businessName,
+        referralCode
       );
 
       if (!error) {
