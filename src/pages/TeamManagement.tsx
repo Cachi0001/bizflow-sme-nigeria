@@ -72,28 +72,26 @@ const TeamManagement = () => {
     setAddingMember(true);
 
     try {
-      // 1. Create a new user in Supabase Auth with the provided password
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: formData.password,
-        email_confirm: true, // Salesperson email should be confirmed
-        user_metadata: { name: formData.name, role: 'Salesperson', created_by_admin: true }, // Mark as created by admin
-      });
+      // Get the current session to include the auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('You must be logged in to add team members');
+      }
 
-      if (authError) throw authError;
-
-      // 2. Insert into team_members table, linking to the new auth user
-      const { error: teamError } = await supabase
-        .from("team_members")
-        .insert({
-          owner_id: user?.id,
-          salesperson_id: authData.user?.id, // Link to the newly created auth user ID
+      // Call the Edge Function to create the salesperson
+      const { data, error } = await supabase.functions.invoke('create-salesperson', {
+        body: {
           name: formData.name,
           email: formData.email,
-          is_active: true // Default to active
-        });
+          password: formData.password,
+          owner_id: user?.id
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
-      if (teamError) throw teamError;
+      if (error) throw error;
 
       toast({
         title: "Salesperson added successfully!",
@@ -106,7 +104,7 @@ const TeamManagement = () => {
       console.error("Error adding salesperson:", error);
       toast({
         title: "Error adding salesperson",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive"
       });
     } finally {
@@ -145,39 +143,36 @@ const TeamManagement = () => {
     }
 
     try {
-      // 1. Get the salesperson_id from the team_members table
-      const { data: memberData, error: fetchError } = await supabase
-        .from("team_members")
-        .select("salesperson_id")
-        .eq("id", memberId)
-        .single();
+      // Get the current session to include the auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('You must be logged in to remove team members');
+      }
 
-      if (fetchError) throw fetchError;
-      if (!memberData || !memberData.salesperson_id) throw new Error("Salesperson ID not found.");
+      // Call the Edge Function to delete the salesperson
+      const { data, error } = await supabase.functions.invoke('delete-salesperson', {
+        body: {
+          member_id: memberId,
+          owner_id: user?.id
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
-      // 2. Delete the user from Supabase Auth
-      const { error: authDeleteError } = await supabase.auth.admin.deleteUser(memberData.salesperson_id);
-      if (authDeleteError) throw authDeleteError;
-
-      // 3. Delete from team_members table
-      const { error: teamDeleteError } = await supabase
-        .from("team_members")
-        .delete()
-        .eq("id", memberId);
-
-      if (teamDeleteError) throw teamDeleteError;
+      if (error) throw error;
 
       toast({
         title: "Salesperson removed",
-        description: `${memberName} has been removed from your team.`
+        description: data.message || `${memberName} has been removed from your team.`
       });
 
       loadTeamMembers();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error removing salesperson:", error);
       toast({
         title: "Error removing salesperson",
-        description: "Please try again.",
+        description: error.message || "An unexpected error occurred",
         variant: "destructive"
       });
     }
@@ -360,6 +355,10 @@ const TeamManagement = () => {
 };
 
 export default TeamManagement;
+
+
+
+
 
 
 
