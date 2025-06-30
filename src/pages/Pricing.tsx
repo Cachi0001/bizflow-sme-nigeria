@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,12 +78,12 @@ const Pricing = () => {
       name: "Yearly Plan",
       price: { weekly: 50000, monthly: 50000, yearly: 50000 },
       description: "Maximum value for serious businesses",
-      invoiceLimit: "5,000/year",
-      expenseLimit: "5,000/year",
+      invoiceLimit: "6,000/year",
+      expenseLimit: "6,000/year",
       referralReward: "₦5,000/referral",
       features: [
-        { name: "5,000 invoices per year", included: true },
-        { name: "5,000 expense records per year", included: true },
+        { name: "6,000 invoices per year", included: true },
+        { name: "6,000 expense records per year", included: true },
         { name: "Full client management", included: true },
         { name: "Paystack payment integration", included: true },
         { name: "Custom invoice branding", included: true },
@@ -238,6 +237,41 @@ const Pricing = () => {
                 </Card>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Pro-rata Upgrade Info Section */}
+      <section className="py-8 sm:py-12 bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900">
+            Flexible Upgrade Options
+          </h2>
+          <p className="text-sm sm:text-lg text-gray-700 mb-6 sm:mb-8 max-w-2xl mx-auto">
+            Upgrade or downgrade your plan anytime with pro-rata credits. You only pay for what you use.
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
+            <Card className="text-center bg-white border-green-200">
+              <CardContent className="p-4 sm:p-6">
+                <div className="text-lg sm:text-xl font-bold text-green-600 mb-2">Instant Upgrades</div>
+                <div className="text-sm sm:text-base text-gray-600">Get more features immediately when you upgrade</div>
+              </CardContent>
+            </Card>
+            
+            <Card className="text-center bg-white border-green-200">
+              <CardContent className="p-4 sm:p-6">
+                <div className="text-lg sm:text-xl font-bold text-green-600 mb-2">Pro-rata Credits</div>
+                <div className="text-sm sm:text-base text-gray-600">Unused subscription time converts to credits</div>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center bg-white border-green-200">
+              <CardContent className="p-4 sm:p-6">
+                <div className="text-lg sm:text-xl font-bold text-green-600 mb-2">No Penalty</div>
+                <div className="text-sm sm:text-base text-gray-600">Change plans without losing money or features</div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
