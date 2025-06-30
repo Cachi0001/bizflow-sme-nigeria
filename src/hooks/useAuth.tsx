@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,24 +23,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
+    let mounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        console.log('Auth state changed:', event, session?.user?.email);
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
       }
     );
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      if (mounted) {
+        console.log('Initial session:', session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (phone: string, email: string, password: string, businessName?: string) => {
@@ -48,21 +59,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Email and password are required");
       }
 
-      // Clean phone number - ensure it's not empty
-      const cleanPhone = phone?.trim() || '';
-
-      console.log('Attempting signup with:', { email, phone: cleanPhone, businessName });
+      console.log('Attempting signup with:', { email, phone, businessName });
 
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `https://bizflow-sme-nigeria.lovable.app/dashboard`,
           data: {
-            phone: phone.trim(), // Must match trigger expectation
-            business_name: businessName.trim(),
-            role: 'Owner', // Required by your schema
-            subscription_tier: 'Free' // Default value
+            phone: phone?.trim() || '',
+            business_name: businessName?.trim() || '',
+            role: 'Owner',
+            subscription_tier: 'Free'
           }
         }
       });
@@ -106,7 +114,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Phone/Email and password are required");
       }
 
-      // Use email directly if it contains @, otherwise treat as phone
       const identifier = phoneOrEmail.includes('@') ? phoneOrEmail.trim() : phoneOrEmail.trim();
       
       console.log('Attempting signin with:', identifier);
@@ -164,7 +171,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const resetPassword = async (email: string) => {
     try {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: `https://bizflow-sme-nigeria.lovable.app/reset-password`
       });
 
       if (error) throw error;

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react"; // Changed: Added useEffect for auth state listening
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,12 +19,16 @@ const Login = () => {
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn, resetPassword, user } = useAuth(); // Changed: Added user to access auth state
+  const { signIn, resetPassword, user } = useAuth();
 
-  // Added: Listen for auth state changes to navigate to dashboard
+  // Smooth navigation without loops
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      console.log('User authenticated, navigating to dashboard');
+      const timer = setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [user, navigate]);
 
@@ -41,7 +46,6 @@ const Login = () => {
       if (error) {
         console.error('Login error:', error.message);
       }
-      // Note: Navigation is now handled by useEffect based on user state
     } catch (error) {
       console.error('Login error:', error);
     } finally {
@@ -93,9 +97,16 @@ const Login = () => {
                 </span>
               </div>
               
-              <Button variant="ghost" onClick={() => navigate('/register')}>
-                Register
-              </Button>
+              {!user && (
+                <Button variant="ghost" onClick={() => navigate('/register')}>
+                  Register
+                </Button>
+              )}
+              {user && (
+                <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+                  Dashboard
+                </Button>
+              )}
             </div>
           </div>
         </header>
@@ -152,7 +163,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex flex-col">
-      {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
@@ -174,14 +184,20 @@ const Login = () => {
               </span>
             </div>
             
-            <Button variant="ghost" onClick={() => navigate('/register')}>
-              Register
-            </Button>
+            {!user && (
+              <Button variant="ghost" onClick={() => navigate('/register')}>
+                Register
+              </Button>
+            )}
+            {user && (
+              <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+                Dashboard
+              </Button>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Login Form */}
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-xl border-0 bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader className="text-center space-y-4 pb-6">

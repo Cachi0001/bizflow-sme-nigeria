@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,9 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast"; // Added: Import useToast for error messages
-import { supabase } from "@/integrations/supabase/client"; // Added: Import supabase for database checks
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -18,84 +18,40 @@ const Register = () => {
     businessName: ""
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
-  const { signUp } = useAuth();
-  const { toast } = useToast(); // Added: Initialize useToast for notifications
+  const { signUp, user } = useAuth();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    console.log('Form data:', formData);
-
     if (!formData.email || !formData.password) {
-      console.error('Missing required fields');
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.phone) {
-      console.error('Phone required');
+      toast({
+        title: "Missing Information",
+        description: "Email and password are required.",
+        variant: "destructive"
+      });
       setLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      console.error('Passwords do not match');
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match.",
+        variant: "destructive"
+      });
       setLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
-      console.error('Password too short');
-      setLoading(false);
-      return;
-    }
-
-    // Added: Check if email or phone already exists in the database
-    try {
-      const { data: emailCheck, error: emailError } = await supabase
-        .from('users')
-        .select('email')
-        .eq('email', formData.email)
-        .single();
-
-      if (emailError && emailError.code !== 'PGRST116') { // PGRST116 means no rows found, which is okay
-        throw emailError;
-      }
-      if (emailCheck) {
-        toast({
-          title: "Email Already Exists",
-          description: "This email is already registered. Please use a different one or log in.",
-          variant: "destructive"
-        });
-        setLoading(false);
-        return;
-      }
-
-      const { data: phoneCheck, error: phoneError } = await supabase
-        .from('users')
-        .select('phone')
-        .eq('phone', formData.phone)
-        .single();
-
-      if (phoneError && phoneError.code !== 'PGRST116') {
-        throw phoneError;
-      }
-      if (phoneCheck) {
-        toast({
-          title: "Phone Number Already Exists",
-          description: "This phone number is already registered. Please use a different one.",
-          variant: "destructive"
-        });
-        setLoading(false);
-        return;
-      }
-    } catch (error) {
-      console.error('Error checking existing credentials:', error);
       toast({
-        title: "Error",
-        description: "An error occurred while checking credentials. Please try again.",
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long.",
         variant: "destructive"
       });
       setLoading(false);
@@ -103,27 +59,18 @@ const Register = () => {
     }
 
     try {
-      console.log('Calling signUp...');
       const { error } = await signUp(
-        formData.phone || '', // Allow empty phone
+        formData.phone || '', 
         formData.email, 
         formData.password, 
         formData.businessName
       );
 
-      console.log('SignUp result:', { error });
-
       if (!error) {
-        console.log('Registration successful');
         navigate('/login');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      toast({
-        title: "Registration Failed",
-        description: "Please try again or check your connection.",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
@@ -131,7 +78,6 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex flex-col">
-      {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
@@ -153,14 +99,20 @@ const Register = () => {
               </span>
             </div>
             
-            <Button variant="ghost" onClick={() => navigate('/login')}>
-              Login
-            </Button>
+            {!user && (
+              <Button variant="ghost" onClick={() => navigate('/login')}>
+                Login
+              </Button>
+            )}
+            {user && (
+              <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+                Dashboard
+              </Button>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Registration Form */}
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-xl border-0 bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader className="text-center space-y-4 pb-6">
@@ -188,13 +140,13 @@ const Register = () => {
                   required
                 />
                 <p className="text-xs text-gray-500">
-                  Email na very important for account recovery
+                  Email is required for account recovery
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                  Phone Number
+                  Phone Number (Optional)
                 </Label>
                 <Input
                   id="phone"
@@ -205,13 +157,13 @@ const Register = () => {
                   className="h-11 text-base"
                 />
                 <p className="text-xs text-gray-500">
-                  Enter your phone number wey we go use reach you (optional)
+                  Phone number for notifications (optional)
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="businessName" className="text-sm font-medium text-gray-700">
-                  Business Name
+                  Business Name (Optional)
                 </Label>
                 <Input
                   id="businessName"
@@ -222,7 +174,7 @@ const Register = () => {
                   className="h-11 text-base"
                 />
                 <p className="text-xs text-gray-500">
-                  Wetin you dey call your business?
+                  What do you call your business?
                 </p>
               </div>
 
@@ -230,15 +182,24 @@ const Register = () => {
                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                   Password *
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Create a strong password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="h-11 text-base"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a strong password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    className="h-11 text-base pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 <p className="text-xs text-gray-500">
                   Use at least 6 characters with mix of letters and numbers
                 </p>
@@ -248,15 +209,24 @@ const Register = () => {
                 <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
                   Confirm Password *
                 </Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Type your password again"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                  className="h-11 text-base"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Type your password again"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                    className="h-11 text-base pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <Button 

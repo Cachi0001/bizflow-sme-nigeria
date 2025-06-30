@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Eye, EyeOff, CheckCircle } from "lucide-react";
 
 const ResetPassword = () => {
@@ -20,32 +21,62 @@ const ResetPassword = () => {
   const [resetComplete, setResetComplete] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const checkSession = async () => {
+    const checkResetSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
+        // Get tokens from URL params
+        const accessToken = searchParams.get('access_token');
+        const refreshToken = searchParams.get('refresh_token');
+        const type = searchParams.get('type');
+
+        console.log('Reset password params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+
+        if (type === 'recovery' && accessToken && refreshToken) {
+          // Set the session with the tokens from the URL
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (error) {
+            console.error('Session error:', error);
+            throw error;
+          }
+
+          console.log('Session set successfully:', data);
           setIsValidSession(true);
         } else {
-          toast({
-            title: "Invalid Reset Link",
-            description: "This password reset link is invalid or has expired.",
-            variant: "destructive"
-          });
-          navigate('/login');
+          // Check if user has active session
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            setIsValidSession(true);
+          } else {
+            toast({
+              title: "Invalid Reset Link",
+              description: "This password reset link is invalid or has expired.",
+              variant: "destructive"
+            });
+            navigate('/login');
+          }
         }
       } catch (error) {
         console.error('Session check error:', error);
+        toast({
+          title: "Invalid Reset Link",
+          description: "This password reset link is invalid or has expired.",
+          variant: "destructive"
+        });
         navigate('/login');
       } finally {
         setCheckingSession(false);
       }
     };
 
-    checkSession();
-  }, [navigate, toast]);
+    checkResetSession();
+  }, [navigate, toast, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +125,6 @@ const ResetPassword = () => {
         description: "Your password has been changed. You can now login with your new password."
       });
 
-      // Redirect to login after 3 seconds
       setTimeout(() => {
         navigate('/login');
       }, 3000);
@@ -153,7 +183,6 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex flex-col">
-      {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-4">
@@ -169,7 +198,6 @@ const ResetPassword = () => {
         </div>
       </header>
 
-      {/* Reset Password Form */}
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-xl border-0 bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader className="text-center space-y-4 pb-6">
