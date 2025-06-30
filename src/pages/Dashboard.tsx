@@ -74,11 +74,11 @@ const Dashboard = () => {
   const loadDashboardData = async () => {
     try {
       const [invoicesData, expensesData, paymentsData, subscriptionData, userDataResponse] = await Promise.all([
-        supabase.from('invoices').select('*').eq('user_id', user?.id),
-        supabase.from('expenses').select('*').eq('user_id', user?.id),
-        supabase.from('payments').select('*').eq('user_id', user?.id),
-        supabase.from('subscriptions').select('*').eq('user_id', user?.id).single(),
-        supabase.from('users').select('*').eq('id', user?.id).single()
+        supabase.from("invoices").select("*").eq("user_id", user?.id),
+        supabase.from("expenses").select("*").eq("user_id", user?.id),
+        supabase.from("payments").select("*").eq("user_id", user?.id),
+        supabase.from("subscriptions").select("*").eq("user_id", user?.id).single(),
+        supabase.from("users").select("*").eq("id", user?.id).single()
       ]);
 
       const invoices = invoicesData.data || [];
@@ -89,7 +89,7 @@ const Dashboard = () => {
 
       setStats({
         totalInvoices: invoices.length,
-        pendingInvoices: invoices.filter(inv => inv.status === 'Pending').length,
+        pendingInvoices: invoices.filter(inv => inv.status === "Pending").length,
         totalExpenses: expenses.reduce((sum, exp) => sum + Number(exp.amount), 0),
         totalPayments: payments.reduce((sum, pay) => sum + Number(pay.amount), 0),
       });
@@ -100,16 +100,16 @@ const Dashboard = () => {
       // Load referral earnings if available
       if (userData?.referral_code) {
         const { data: earningsData } = await supabase
-          .from('referral_earnings')
-          .select('amount')
-          .eq('referrer_id', user?.id);
+          .from("referral_earnings")
+          .select("amount")
+          .eq("referrer_id", user?.id);
         
         const totalEarnings = earningsData?.reduce((sum, earning) => sum + Number(earning.amount), 0) || 0;
         setStats(prev => ({ ...prev, referralEarnings: totalEarnings }));
       }
 
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error("Error loading dashboard data:", error);
       toast({
         title: "Error loading dashboard",
         description: "Please try refreshing the page.",
@@ -123,14 +123,14 @@ const Dashboard = () => {
   const loadChartData = async () => {
     try {
       const { data: invoicesData, error: invoicesError } = await supabase
-        .from('invoices')
-        .select('amount, created_at')
-        .eq('user_id', user?.id);
+        .from("invoices")
+        .select("amount, created_at")
+        .eq("user_id", user?.id);
 
       const { data: expensesData, error: expensesError } = await supabase
-        .from('expenses')
-        .select('amount, created_at')
-        .eq('user_id', user?.id);
+        .from("expenses")
+        .select("amount, created_at")
+        .eq("user_id", user?.id);
 
       if (invoicesError) throw invoicesError;
       if (expensesError) throw expensesError;
@@ -141,19 +141,19 @@ const Dashboard = () => {
       const today = new Date();
       for (let i = 6; i >= 0; i--) {
         const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        const monthName = date.toLocaleString('default', { month: 'short' });
+        const monthName = date.toLocaleString("default", { month: "short" });
         monthlyData[monthName] = { invoices: 0, expenses: 0 };
       }
 
       invoicesData.forEach(item => {
-        const monthName = new Date(item.created_at).toLocaleString('default', { month: 'short' });
+        const monthName = new Date(item.created_at).toLocaleString("default", { month: "short" });
         if (monthlyData[monthName]) {
           monthlyData[monthName].invoices += item.amount;
         }
       });
 
       expensesData.forEach(item => {
-        const monthName = new Date(item.created_at).toLocaleString('default', { month: 'short' });
+        const monthName = new Date(item.created_at).toLocaleString("default", { month: "short" });
         if (monthlyData[monthName]) {
           monthlyData[monthName].expenses += item.amount;
         }
@@ -162,7 +162,7 @@ const Dashboard = () => {
       setChartData(Object.keys(monthlyData).map(month => ({ name: month, ...monthlyData[month] })));
 
     } catch (error) {
-      console.error('Error loading chart data:', error);
+      console.error("Error loading chart data:", error);
       toast({
         title: "Error loading chart data",
         description: "Please try again later.",
@@ -175,7 +175,7 @@ const Dashboard = () => {
     try {
       setUpgrading(tier);
       
-      const { data, error } = await supabase.functions.invoke('handle-upgrade', {
+      const { data, error } = await supabase.functions.invoke("handle-upgrade", {
         body: { tier, userId: user?.id }
       });
 
@@ -191,7 +191,7 @@ const Dashboard = () => {
         loadDashboardData();
       }
     } catch (error: any) {
-      console.error('Upgrade error:', error);
+      console.error("Upgrade error:", error);
       toast({
         title: "Upgrade failed",
         description: error.message || "Please try again later.",
@@ -218,7 +218,7 @@ const Dashboard = () => {
             {userData?.business_name && (
               <span className="text-gray-700">{userData?.business_name}</span>
             )}
-            <Button variant="outline" onClick={() => navigate('/profile')}>
+            <Button variant="outline" onClick={() => navigate("/profile")}>
               Profile
             </Button>
           </div>
@@ -278,7 +278,7 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/invoices')}>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/invoices")}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -290,7 +290,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/expenses')}>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/expenses")}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -302,7 +302,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/clients')}>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/clients")}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -314,7 +314,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/payments')}>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/payments")}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -326,7 +326,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/transactions')}>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/transactions")}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -338,7 +338,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/referrals')}>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/referrals")}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -353,8 +353,8 @@ const Dashboard = () => {
           </Card>
 
           {/* Team Management - Only for paid plans */}
-          {currentSubscription?.tier !== 'Free' && (
-            <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/team')}>
+          {currentSubscription?.tier !== "Free" && (
+            <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/team")}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -367,7 +367,7 @@ const Dashboard = () => {
             </Card>
           )}
 
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/profile')}>
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/profile")}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -380,25 +380,53 @@ const Dashboard = () => {
           </Card>
         </div>
 
+        {/* Financial Overview Chart */}
+        <Card className="bg-gradient-to-br from-green-50 to-blue-50">
+          <CardHeader>
+            <CardTitle>Financial Overview</CardTitle>
+            <CardDescription>Invoices vs Expenses</CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={chartData}
+                margin={{
+                  top: 10,
+                  right: 30,
+                  left: 0,
+                  bottom: 0,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis domain={[0, 'auto']} /> {/* Adjusted Y-axis domain */}
+                <Tooltip />
+                <Area type="monotone" dataKey="invoices" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
+                <Area type="monotone" dataKey="expenses" stackId="1" stroke="#8884d8" fill="#8884d8" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
         {/* Subscription Section */}
         <Card className="bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader>
             <CardTitle>Subscription</CardTitle>
             <CardDescription>
-              {currentSubscription?.tier === 'Free'
-                ? 'You are currently on the Free plan.'
+              {currentSubscription?.tier === "Free"
+                ? "You are currently on the Free plan."
                 : `You are on the ${currentSubscription?.tier} plan.`}
           </CardDescription>
           </CardHeader>
           <CardContent>
-            {currentSubscription?.tier === 'Free' ? (
+            {currentSubscription?.tier === "Free" ? (
               <div className="text-center py-4">
                 <p className="text-green-600 font-medium">
                   Upgrade to a paid plan to unlock more features!
                 </p>
                 <Button 
                   className="mt-4 bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
-                  onClick={() => navigate('/pricing')}
+                  onClick={() => navigate("/pricing")}
                 >
                   View Pricing
                 </Button>
@@ -414,32 +442,12 @@ const Dashboard = () => {
                 )}
                 <Button 
                   className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
-                  onClick={() => navigate('/pricing')}
+                  onClick={() => navigate("/pricing")}
                 >
                   Manage Subscription
                 </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Charts */}
-        <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-          <CardHeader>
-            <CardTitle>Financial Overview</CardTitle>
-            <CardDescription>Invoices vs Expenses</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Area type="monotone" dataKey="invoices" stroke="#82ca9d" fill="#82ca9d" />
-                <Area type="monotone" dataKey="expenses" stroke="#8884d8" fill="#8884d8" />
-              </AreaChart>
-            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
@@ -448,5 +456,7 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
 
 

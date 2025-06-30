@@ -34,6 +34,7 @@ const TeamManagement = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "", // Added password field
   });
   const { user } = useAuth();
   const { toast } = useToast();
@@ -71,13 +72,12 @@ const TeamManagement = () => {
     setAddingMember(true);
 
     try {
-      // 1. Create a new user in Supabase Auth with a temporary password
-      const tempPassword = Math.random().toString(36).slice(-8); // Generate a random password
+      // 1. Create a new user in Supabase Auth with the provided password
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: formData.email,
-        password: tempPassword,
+        password: formData.password,
         email_confirm: true, // Salesperson email should be confirmed
-        user_metadata: { name: formData.name, role: 'Salesperson' },
+        user_metadata: { name: formData.name, role: 'Salesperson', created_by_admin: true }, // Mark as created by admin
       });
 
       if (authError) throw authError;
@@ -97,10 +97,10 @@ const TeamManagement = () => {
 
       toast({
         title: "Salesperson added successfully!",
-        description: `${formData.name} has been added to your team. Their temporary password is: ${tempPassword}. Please share this with them securely.`
+        description: `${formData.name} has been added to your team. Their email is ${formData.email} and password is ${formData.password}. Please share this with them securely.`
       });
 
-      setFormData({ name: "", email: "" });
+      setFormData({ name: "", email: "", password: "" }); // Clear password field
       loadTeamMembers();
     } catch (error: any) {
       console.error("Error adding salesperson:", error);
@@ -241,6 +241,17 @@ const TeamManagement = () => {
                     required
                   />
                 </div>
+                <div>
+                  <Label htmlFor="password">Temporary Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    placeholder="Enter a temporary password"
+                    required
+                  />
+                </div>
               </div>
               <Button 
                 type="submit" 
@@ -349,6 +360,8 @@ const TeamManagement = () => {
 };
 
 export default TeamManagement;
+
+
 
 
 

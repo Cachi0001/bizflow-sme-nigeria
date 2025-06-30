@@ -20,11 +20,12 @@ const Register = () => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Extract referral code from URL
     const params = new URLSearchParams(location.search);
-    const ref = params.get('ref');
+    const ref = params.get("ref");
     if (ref) {
       setFormData(prev => ({ ...prev, referralCode: ref }));
     }
@@ -36,10 +37,28 @@ const Register = () => {
 
     try {
       const { phone, email, password, businessName, referralCode } = formData;
-      await signUp(phone, email, password, businessName, referralCode);
-      navigate('/dashboard');
-    } catch (error) {
-      // Error is handled within the signUp function
+      const { data, error } = await signUp(phone, email, password, businessName, referralCode);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.user?.email_confirmed_at) {
+        navigate("/dashboard");
+      } else {
+        toast({
+          title: "Account Created!",
+          description: "Please check your email to verify your account before logging in.",
+          variant: "default"
+        });
+        navigate("/login"); // Redirect to login page after successful registration, awaiting email verification
+      }
+    } catch (error: any) {
+      toast({
+        title: "Registration Failed",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -164,7 +183,7 @@ const Register = () => {
             </form>
             <div className="mt-4 text-center">
               Already have an account?{" "}
-              <Button variant="link" onClick={() => navigate('/login')}>
+              <Button variant="link" onClick={() => navigate("/login")}>
                 Log in
               </Button>
             </div>
@@ -176,3 +195,5 @@ const Register = () => {
 };
 
 export default Register;
+
+

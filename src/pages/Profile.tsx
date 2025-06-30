@@ -338,10 +338,28 @@ const Profile = () => {
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
+                  <Button 
+                    variant="outline"
+                    className="w-full"
+                    onClick={copyReferralLink}
+                    size="sm"
+                  >
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Start Earning
+                  </Button>
                 </div>
               ) : (
                 <div className="text-center py-4">
                   <p className="text-gray-500">Upgrade your plan to access the referral program.</p>
+                  <Button 
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={() => navigate("/pricing")}
+                    size="sm"
+                  >
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Upgrade to Start Earning
+                  </Button>
                 </div>
               )}
               
@@ -351,18 +369,6 @@ const Profile = () => {
                 <p>• Minimum withdrawal: ₦3,000 (15% fee)</p>
                 <p>• No cap on total earnings</p>
               </div>
-
-              {!showReferralSection && (
-                <Button 
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => navigate("/pricing")}
-                  size="sm"
-                >
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Upgrade to Start Earning
-                </Button>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -392,5 +398,7 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
 
 

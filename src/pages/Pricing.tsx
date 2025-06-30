@@ -44,9 +44,9 @@ const Pricing = () => {
       {/* Header */}
       <header className="bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+          <Button variant="ghost" onClick={() => navigate(user ? "/dashboard" : "/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            Back {user ? "to Dashboard" : "Home"}
           </Button>
           <h1 className="text-xl font-bold text-gray-900">Pricing Plans</h1>
         </div>
@@ -274,5 +274,7 @@ const Pricing = () => {
 };
 
 export default Pricing;
+
+
 
 
