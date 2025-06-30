@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   FileText, 
   Receipt, 
@@ -26,6 +27,7 @@ import { useEffect, useState } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
   const features = [
@@ -138,19 +140,25 @@ const Index = () => {
             </div>
             
             <nav className="hidden md:flex items-center space-x-6">
-              <Button variant="ghost" onClick={() => navigate('/features')}>Features</Button>
-              <Button variant="ghost" onClick={() => navigate('/pricing')}>Pricing</Button>
-              <Button variant="ghost" onClick={() => navigate('/login')}>Login</Button>
-              <Button onClick={() => navigate('/register')} className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600">
-                Get Started Free
-              </Button>
+              <Button variant="ghost" onClick={() => navigate("/features")}>Features</Button>
+              <Button variant="ghost" onClick={() => navigate("/pricing")}>Pricing</Button>
+              {user ? (
+                <Button variant="ghost" onClick={() => signOut()}>Logout</Button>
+              ) : (
+                <>
+                  <Button variant="ghost" onClick={() => navigate("/login")}>Login</Button>
+                  <Button onClick={() => navigate("/register")} className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600">
+                    Get Started Free
+                  </Button>
+                </>
+              )}
             </nav>
 
             <Button 
               variant="outline" 
               size="sm" 
               className="md:hidden"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate("/register")}
             >
               Sign Up
             </Button>
@@ -177,7 +185,7 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Button 
                 size="lg" 
-                onClick={() => navigate('/register')}
+                onClick={() => navigate("/register")}
                 className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               >
                 Get Started Free
@@ -187,7 +195,7 @@ const Index = () => {
               <Button 
                 variant="outline" 
                 size="lg"
-                onClick={() => navigate('/features')}
+                onClick={() => navigate("/features")}
                 className="px-8 py-4 text-lg font-semibold rounded-xl border-2 w-full sm:w-auto border-green-200 hover:border-green-300"
               >
                 Learn More
@@ -323,7 +331,7 @@ const Index = () => {
           <div className="text-center mt-8">
             <Button 
               size="lg" 
-              onClick={() => navigate('/pricing')}
+              onClick={() => navigate("/pricing")}
               className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600"
             >
               View All Plans
@@ -380,63 +388,23 @@ const Index = () => {
             Ready to Simplify Your Business?
           </h2>
           <p className="text-xl text-green-100 mb-8">
-            Join thousands of Nigerian businesses using Bizflow. Start free today!
+            Start managing your invoices, expenses, and clients today. It's free to begin!
           </p>
           <Button 
-            size="lg"
-            onClick={() => navigate('/register')}
-            className="bg-white text-green-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            size="lg" 
+            onClick={() => navigate("/register")}
+            className="bg-white text-green-600 hover:bg-green-50 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
           >
-            Get Started Free
+            Get Started Now
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-green-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">B</span>
-                </div>
-                <span className="text-xl font-bold">Bizflow</span>
-              </div>
-              <p className="text-gray-400">
-                Simplifying business management for Nigerian SMEs.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="/features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="/pricing" className="hover:text-white transition-colors">Pricing</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-800 pt-8 mt-8 text-center text-gray-400">
-            <p>&copy; 2024 Bizflow. Built for Nigerian SMEs with ❤️</p>
-          </div>
+      <footer className="bg-gray-800 text-white py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p>&copy; {new Date().getFullYear()} Bizflow. All rights reserved.</p>
         </div>
       </footer>
     </div>
@@ -444,3 +412,5 @@ const Index = () => {
 };
 
 export default Index;
+
+

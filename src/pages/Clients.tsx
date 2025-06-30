@@ -9,10 +9,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  ArrowLeft, 
-  Plus, 
-  Users, 
+import {
+  ArrowLeft,
+  Plus,
+  Users,
   Phone,
   Mail,
   MapPin,
@@ -20,6 +20,7 @@ import {
   Edit,
   Trash2
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface Client {
   id: string;
@@ -35,6 +36,7 @@ const Clients = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -55,15 +57,15 @@ const Clients = () => {
   const loadClients = async () => {
     try {
       const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+        .from("clients")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setClients(data || []);
     } catch (error) {
-      console.error('Error loading clients:', error);
+      console.error("Error loading clients:", error);
       toast({
         title: "Error",
         description: "Failed to load clients",
@@ -80,7 +82,7 @@ const Clients = () => {
 
     try {
       const { error } = await supabase
-        .from('clients')
+        .from("clients")
         .insert({
           user_id: user?.id,
           name: formData.name,
@@ -105,7 +107,7 @@ const Clients = () => {
       setShowCreateForm(false);
       loadClients();
     } catch (error) {
-      console.error('Error creating client:', error);
+      console.error("Error creating client:", error);
       toast({
         title: "Failed to add client",
         description: "Please try again or check your connection.",
@@ -116,11 +118,75 @@ const Clients = () => {
     }
   };
 
+  const handleEditClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingClient) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("clients")
+        .update({
+          name: editingClient.name,
+          phone: editingClient.phone || null,
+          email: editingClient.email || null,
+          address: editingClient.address || null
+        })
+        .eq("id", editingClient.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Client updated!",
+        description: `${editingClient.name} has been updated.`
+      });
+      setEditingClient(null);
+      loadClients();
+    } catch (error) {
+      console.error("Error updating client:", error);
+      toast({
+        title: "Failed to update client",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteClient = async (clientId: string, clientName: string) => {
+    if (!window.confirm(`Are you sure you want to delete ${clientName}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("clients")
+        .delete()
+        .eq("id", clientId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Client deleted!",
+        description: `${clientName} has been removed.`
+      });
+      loadClients();
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      toast({
+        title: "Failed to delete client",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-NG', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-NG", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
     });
   };
 
@@ -141,15 +207,15 @@ const Clients = () => {
       <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/dashboard')}
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/dashboard")}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back to Dashboard</span>
             </Button>
-            
+
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">B</span>
@@ -158,8 +224,8 @@ const Clients = () => {
                 Bizflow
               </span>
             </div>
-            
-            <Button 
+
+            <Button
               onClick={() => setShowCreateForm(true)}
               className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
             >
@@ -188,7 +254,7 @@ const Clients = () => {
             <CardHeader>
               <CardTitle>Add New Client</CardTitle>
               <CardDescription>
-                Fill in the client details 
+                Fill in the client details
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -256,8 +322,8 @@ const Clients = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
                     disabled={creating}
                   >
@@ -273,9 +339,9 @@ const Clients = () => {
                       </>
                     )}
                   </Button>
-                  
-                  <Button 
-                    type="button" 
+
+                  <Button
+                    type="button"
                     variant="outline"
                     onClick={() => setShowCreateForm(false)}
                   >
@@ -294,7 +360,7 @@ const Clients = () => {
               Your Clients ({clients.length})
             </h2>
             {!showCreateForm && (
-              <Button 
+              <Button
                 onClick={() => setShowCreateForm(true)}
                 className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
               >
@@ -312,7 +378,7 @@ const Clients = () => {
                 <p className="text-gray-600 mb-6">
                   Add your first client to start managing your business relationships
                 </p>
-                <Button 
+                <Button
                   onClick={() => setShowCreateForm(true)}
                   className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
                 >
@@ -335,33 +401,33 @@ const Clients = () => {
                         <span className="text-sm">{client.phone}</span>
                       </div>
                     )}
-                    
+
                     {client.email && (
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-gray-500" />
                         <span className="text-sm">{client.email}</span>
                       </div>
                     )}
-                    
+
                     {client.address && (
                       <div className="flex items-start gap-2">
                         <MapPin className="h-4 w-4 text-gray-500 mt-0.5" />
                         <span className="text-sm">{client.address}</span>
                       </div>
                     )}
-                    
+
                     <div className="flex items-center justify-between pt-2 border-t">
                       <span className="text-xs text-gray-500">
                         Added {formatDate(client.created_at)}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 pt-3">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => setEditingClient(client)}>
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button variant="destructive" size="sm" className="flex-1" onClick={() => handleDeleteClient(client.id, client.name)}>
                         <Trash2 className="h-4 w-4 mr-1" />
                         Delete
                       </Button>
@@ -373,8 +439,72 @@ const Clients = () => {
           )}
         </div>
       </div>
+
+      {/* Edit Client Dialog */}
+      <Dialog open={!!editingClient} onOpenChange={() => setEditingClient(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Client</DialogTitle>
+            <DialogDescription>
+              Make changes to client details here. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditClient} className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">Name</Label>
+              <Input
+                id="name"
+                value={editingClient?.name || ""}
+                onChange={(e) => setEditingClient(prev => prev ? { ...prev, name: e.target.value } : null)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="phone" className="text-right">Phone</Label>
+              <Input
+                id="phone"
+                value={editingClient?.phone || ""}
+                onChange={(e) => setEditingClient(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">Email</Label>
+              <Input
+                id="email"
+                value={editingClient?.email || ""}
+                onChange={(e) => setEditingClient(prev => prev ? { ...prev, email: e.target.value } : null)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="address" className="text-right">Address</Label>
+              <Textarea
+                id="address"
+                value={editingClient?.address || ""}
+                onChange={(e) => setEditingClient(prev => prev ? { ...prev, address: e.target.value } : null)}
+                className="col-span-3"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={saving}>
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save changes"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default Clients;
+
+

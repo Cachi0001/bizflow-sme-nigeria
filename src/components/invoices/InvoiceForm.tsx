@@ -71,11 +71,11 @@ const InvoiceForm = ({ clients, onInvoiceCreated, user }: InvoiceFormProps) => {
 
     try {
       const { error } = await supabase
-        .from('invoices')
+        .from("invoices")
         .insert({
           client_name: formData.client_name,
           amount: Number(formData.amount),
-          due_date: formData.status === "Pending" ? formData.due_date?.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          due_date: formData.status === "Pending" ? formData.due_date?.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
           notes: formData.notes,
           status: formData.status,
           user_id: user?.id
@@ -98,7 +98,7 @@ const InvoiceForm = ({ clients, onInvoiceCreated, user }: InvoiceFormProps) => {
 
       onInvoiceCreated();
     } catch (error) {
-      console.error('Error creating invoice:', error);
+      console.error("Error creating invoice:", error);
       toast({
         title: "Error",
         description: "Failed to create invoice. Please try again.",
@@ -120,9 +120,16 @@ const InvoiceForm = ({ clients, onInvoiceCreated, user }: InvoiceFormProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="client">Client Name *</Label>
+              <Input
+                id="client_name"
+                placeholder="Enter client name or select from dropdown"
+                value={formData.client_name}
+                onChange={(e) => setFormData({...formData, client_name: e.target.value})}
+                required
+              />
               <Select value={formData.client_name} onValueChange={(value) => setFormData({...formData, client_name: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select or type client name" />
+                  <SelectValue placeholder="Select existing client" />
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((client) => (
@@ -227,3 +234,5 @@ const InvoiceForm = ({ clients, onInvoiceCreated, user }: InvoiceFormProps) => {
 };
 
 export default InvoiceForm;
+
+

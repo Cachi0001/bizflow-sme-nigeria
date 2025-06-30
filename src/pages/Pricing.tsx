@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } => "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, ArrowLeft } from "lucide-react";
@@ -29,7 +29,7 @@ const Pricing = () => {
         setUpgrading(null);
       }, 2000);
     } catch (error: any) {
-      console.error('Upgrade error:', error);
+      console.error("Upgrade error:", error);
       toast({
         title: "Upgrade failed",
         description: error.message || "Please try again later.",
@@ -44,7 +44,7 @@ const Pricing = () => {
       {/* Header */}
       <header className="bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+          <Button variant="ghost" onClick={() => navigate("/dashboard")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
@@ -130,10 +130,10 @@ const Pricing = () => {
               </ul>
               <Button 
                 className="w-full bg-white text-green-600 hover:bg-green-100"
-                onClick={() => handleUpgrade('Weekly')}
-                disabled={upgrading === 'Weekly'}
+                onClick={() => handleUpgrade("Weekly")}
+                disabled={upgrading === "Weekly"}
               >
-                {upgrading === 'Weekly' ? 'Processing...' : 'Choose Weekly'}
+                {upgrading === "Weekly" ? "Processing..." : "Choose Weekly"}
               </Button>
             </CardContent>
           </Card>
@@ -143,7 +143,7 @@ const Pricing = () => {
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-gray-900">Yearly Plan</CardTitle>
               <div className="mt-4">
-                <span className="text-4xl font-bold text-gray-900">₦50,000</span>
+                <span className="text-4xl font-bold text-gray-900">₦6,000</span>
                 <span className="text-gray-500">/year</span>
               </div>
               <CardDescription className="mt-2">
@@ -183,10 +183,10 @@ const Pricing = () => {
               </ul>
               <Button 
                 className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white"
-                onClick={() => handleUpgrade('Yearly')}
-                disabled={upgrading === 'Yearly'}
+                onClick={() => handleUpgrade("Yearly")}
+                disabled={upgrading === "Yearly"}
               >
-                {upgrading === 'Yearly' ? 'Processing...' : 'Choose Yearly'}
+                {upgrading === "Yearly" ? "Processing..." : "Choose Yearly"}
               </Button>
             </CardContent>
           </Card>
@@ -228,3 +228,5 @@ const Pricing = () => {
 };
 
 export default Pricing;
+
+

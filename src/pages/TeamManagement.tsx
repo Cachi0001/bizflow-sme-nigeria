@@ -8,11 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Users, 
-  UserPlus, 
-  UserCheck, 
-  UserX, 
+import {
+  Users,
+  UserPlus,
+  UserCheck,
+  UserX,
   ArrowLeft,
   Trash2
 } from "lucide-react";
@@ -34,7 +34,6 @@ const TeamManagement = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: ""
   });
   const { user } = useAuth();
   const { toast } = useToast();
@@ -49,14 +48,14 @@ const TeamManagement = () => {
   const loadTeamMembers = async () => {
     try {
       const { data, error } = await supabase
-        .from('team_members')
-        .select('*')
-        .eq('owner_id', user?.id);
+        .from("team_members")
+        .select("*")
+        .eq("owner_id", user?.id);
 
       if (error) throw error;
       setTeamMembers(data || []);
     } catch (error) {
-      console.error('Error loading team members:', error);
+      console.error("Error loading team members:", error);
       toast({
         title: "Error loading team members",
         description: "Please try again later.",
@@ -72,48 +71,29 @@ const TeamManagement = () => {
     setAddingMember(true);
 
     try {
-      // First create the salesperson user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-          data: {
-            role: 'Salesperson',
-            business_name: formData.name,
-            phone: ''
-          }
-        }
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Add to team_members table
-        const { error: teamError } = await supabase
-          .from('team_members')
-          .insert({
-            owner_id: user?.id,
-            salesperson_id: authData.user.id,
-            name: formData.name,
-            email: formData.email,
-            is_active: true
-          });
-
-        if (teamError) throw teamError;
-
-        toast({
-          title: "Team member added successfully!",
-          description: `${formData.name} has been added to your team.`
+      // Directly insert into team_members table
+      const { error: teamError } = await supabase
+        .from("team_members")
+        .insert({
+          owner_id: user?.id,
+          name: formData.name,
+          email: formData.email,
+          is_active: true // Default to active
         });
 
-        setFormData({ name: "", email: "", password: "" });
-        loadTeamMembers();
-      }
-    } catch (error: any) {
-      console.error('Error adding team member:', error);
+      if (teamError) throw teamError;
+
       toast({
-        title: "Error adding team member",
+        title: "Salesperson added successfully!",
+        description: `${formData.name} has been added to your team.`
+      });
+
+      setFormData({ name: "", email: "" });
+      loadTeamMembers();
+    } catch (error: any) {
+      console.error("Error adding salesperson:", error);
+      toast({
+        title: "Error adding salesperson",
         description: error.message,
         variant: "destructive"
       });
@@ -125,20 +105,20 @@ const TeamManagement = () => {
   const toggleMemberStatus = async (memberId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
-        .from('team_members')
+        .from("team_members")
         .update({ is_active: !currentStatus })
-        .eq('id', memberId);
+        .eq("id", memberId);
 
       if (error) throw error;
 
       toast({
-        title: `Team member ${!currentStatus ? 'activated' : 'deactivated'}`,
+        title: `Salesperson ${!currentStatus ? "activated" : "deactivated"}`,
         description: "Changes have been saved."
       });
 
       loadTeamMembers();
     } catch (error) {
-      console.error('Error updating team member status:', error);
+      console.error("Error updating salesperson status:", error);
       toast({
         title: "Error updating status",
         description: "Please try again.",
@@ -154,22 +134,22 @@ const TeamManagement = () => {
 
     try {
       const { error } = await supabase
-        .from('team_members')
+        .from("team_members")
         .delete()
-        .eq('id', memberId);
+        .eq("id", memberId);
 
       if (error) throw error;
 
       toast({
-        title: "Team member removed",
+        title: "Salesperson removed",
         description: `${memberName} has been removed from your team.`
       });
 
       loadTeamMembers();
     } catch (error) {
-      console.error('Error removing team member:', error);
+      console.error("Error removing salesperson:", error);
       toast({
-        title: "Error removing team member",
+        title: "Error removing salesperson",
         description: "Please try again.",
         variant: "destructive"
       });
@@ -186,7 +166,7 @@ const TeamManagement = () => {
       <header className="bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+            <Button variant="ghost" onClick={() => navigate("/dashboard")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
@@ -235,27 +215,12 @@ const TeamManagement = () => {
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="password">Temporary Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  placeholder="Minimum 6 characters"
-                  minLength={6}
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  They can change this password after first login
-                </p>
-              </div>
               <Button 
                 type="submit" 
                 disabled={addingMember}
                 className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
               >
-                {addingMember ? "Adding..." : "Add Team Member"}
+                {addingMember ? "Adding..." : "Add Salesperson"}
               </Button>
             </form>
           </CardContent>
@@ -280,7 +245,7 @@ const TeamManagement = () => {
                 {teamMembers.map((member) => (
                   <div key={member.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
                     <div className="flex items-center space-x-4">
-                      <div className={`p-2 rounded-full ${member.is_active ? 'bg-green-100' : 'bg-gray-100'}`}>
+                      <div className={`p-2 rounded-full ${member.is_active ? "bg-green-100" : "bg-gray-100"}`}>
                         {member.is_active ? (
                           <UserCheck className="h-4 w-4 text-green-600" />
                         ) : (
@@ -357,3 +322,5 @@ const TeamManagement = () => {
 };
 
 export default TeamManagement;
+
+

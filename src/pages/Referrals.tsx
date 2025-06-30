@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Users, 
-  Copy, 
-  DollarSign, 
+import {
+  Users,
+  Copy,
+  DollarSign,
   ArrowLeft,
   Banknote,
   TrendingUp,
@@ -53,7 +53,7 @@ const Referrals = () => {
     accountNumber: "",
     accountName: ""
   });
-  
+
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -67,45 +67,60 @@ const Referrals = () => {
 
   const loadUserData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('referral_code')
-        .eq('id', user?.id)
-        .single();
+      let currentReferralCode = referralCode;
+      if (!currentReferralCode) {
+        const { data, error } = await supabase
+          .from("users")
+          .select("referral_code")
+          .eq("id", user?.id)
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data?.referral_code) {
-        setReferralCode(data.referral_code);
-        setReferralLink(`${window.location.origin}/register?ref=${data.referral_code}`);
+        if (data?.referral_code) {
+          currentReferralCode = data.referral_code;
+          setReferralCode(currentReferralCode);
+        } else {
+          // Generate a new referral code if one doesn't exist
+          const newCode = `REF-${Math.random().toString(36).substr(2, 8)}`;
+          const { error: updateError } = await supabase
+            .from("users")
+            .update({ referral_code: newCode })
+            .eq("id", user?.id);
+
+          if (updateError) throw updateError;
+          currentReferralCode = newCode;
+          setReferralCode(newCode);
+        }
       }
+      setReferralLink(`${window.location.origin}/register?ref=${currentReferralCode}`);
     } catch (error) {
-      console.error('Error loading user data:', error);
+      console.error("Error loading or generating user data:", error);
     }
   };
 
   const loadEarnings = async () => {
     try {
       const { data, error } = await supabase
-        .from('referral_earnings')
+        .from("referral_earnings")
         .select(`
           *,
           users!referral_earnings_referred_id_fkey(business_name, email)
         `)
-        .eq('referrer_id', user?.id)
-        .order('created_at', { ascending: false });
+        .eq("referrer_id", user?.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
       setEarnings(data || []);
-      
+
       const total = data?.reduce((sum, earning) => sum + Number(earning.amount), 0) || 0;
       setTotalEarnings(total);
-      
-      const available = data?.filter(e => e.status === 'pending').reduce((sum, earning) => sum + Number(earning.amount), 0) || 0;
+
+      const available = data?.filter(e => e.status === "pending").reduce((sum, earning) => sum + Number(earning.amount), 0) || 0;
       setAvailableBalance(available);
     } catch (error) {
-      console.error('Error loading earnings:', error);
+      console.error("Error loading earnings:", error);
       toast({
         title: "Error loading earnings",
         description: "Please try again later.",
@@ -126,9 +141,9 @@ const Referrals = () => {
 
   const handleWithdrawal = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const amount = parseFloat(withdrawalData.amount);
-    
+
     if (amount < 3000) {
       toast({
         title: "Minimum withdrawal amount",
@@ -155,24 +170,24 @@ const Referrals = () => {
       const finalAmount = amount - platformFee;
 
       const { error } = await supabase
-        .from('withdrawal_requests')
+        .from("withdrawal_requests")
         .insert({
           user_id: user?.id,
           amount: finalAmount,
           bank_name: withdrawalData.bankName,
           account_number: withdrawalData.accountNumber,
           account_name: withdrawalData.accountName,
-          status: 'pending'
+          status: "pending"
         });
 
       if (error) throw error;
 
-      // Update earnings status to 'withdrawn'
+      // Update earnings status to "withdrawn"
       const { error: updateError } = await supabase
-        .from('referral_earnings')
-        .update({ status: 'withdrawn' })
-        .eq('referrer_id', user?.id)
-        .eq('status', 'pending');
+        .from("referral_earnings")
+        .update({ status: "withdrawn" })
+        .eq("referrer_id", user?.id)
+        .eq("status", "pending");
 
       if (updateError) throw updateError;
 
@@ -188,10 +203,10 @@ const Referrals = () => {
         accountNumber: "",
         accountName: ""
       });
-      
+
       loadEarnings();
     } catch (error: any) {
-      console.error('Error submitting withdrawal:', error);
+      console.error("Error submitting withdrawal:", error);
       toast({
         title: "Withdrawal failed",
         description: error.message,
@@ -212,7 +227,7 @@ const Referrals = () => {
       <header className="bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+            <Button variant="ghost" onClick={() => navigate("/dashboard")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
@@ -269,7 +284,8 @@ const Referrals = () => {
           <CardHeader>
             <CardTitle>Your Referral Link</CardTitle>
             <CardDescription>
-              Share this link to earn 10% of every upgrade made by your referrals
+              Share this link to earn 10% of every upgrade made by your referrals.
+              Earnings are only applicable to paid plans.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -302,7 +318,7 @@ const Referrals = () => {
             <CardTitle className="flex items-center justify-between">
               Withdraw Earnings
               {availableBalance >= 3000 && (
-                <Button 
+                <Button
                   onClick={() => setShowWithdrawForm(!showWithdrawForm)}
                   className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
                 >
@@ -374,21 +390,21 @@ const Referrals = () => {
                 {withdrawalData.amount && (
                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-800">
-                      <strong>Amount after 15% fee:</strong> ₦{(parseFloat(withdrawalData.amount || '0') * 0.85).toFixed(2)}
+                      <strong>Amount after 15% fee:</strong> ₦{(parseFloat(withdrawalData.amount || "0") * 0.85).toFixed(2)}
                     </p>
                   </div>
                 )}
                 <div className="flex gap-2">
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={withdrawing}
                     className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
                   >
                     {withdrawing ? "Processing..." : "Submit Withdrawal"}
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => setShowWithdrawForm(false)}
                   >
                     Cancel
@@ -427,14 +443,14 @@ const Referrals = () => {
                     <div>
                       <p className="font-medium">₦{Number(earning.amount).toLocaleString()}</p>
                       <p className="text-sm text-gray-500">
-                        {earning.users?.business_name || earning.users?.email || 'Unknown User'}
+                        {earning.users?.business_name || earning.users?.email || "Unknown User"}
                       </p>
                       <p className="text-xs text-gray-400">
                         {new Date(earning.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <Badge variant={earning.status === 'pending' ? 'default' : earning.status === 'withdrawn' ? 'secondary' : 'outline'}>
-                      {earning.status.charAt(0).toUpperCase() + earning.status.slice(1)}
+                    <Badge variant={earning.status === "pending" ? "warning" : "success"}>
+                      {earning.status}
                     </Badge>
                   </div>
                 ))}
@@ -448,3 +464,5 @@ const Referrals = () => {
 };
 
 export default Referrals;
+
+
