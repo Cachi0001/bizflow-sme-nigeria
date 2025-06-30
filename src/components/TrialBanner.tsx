@@ -28,25 +28,68 @@ const TrialBanner = () => {
     if (!user) return;
 
     try {
+      // First, check if the user exists in the users table
       const { data, error } = await supabase
         .from('users')
         .select('is_trial, trial_end_date, subscription_tier')
-        .eq('id', user.id)
-        .single();
+        .eq('id', user.id);
 
       if (error) {
         console.error('Error fetching trial info:', error);
         return;
       }
 
-      setTrialInfo(data);
+      // If no user data found, call fix-user-data function to set up the user
+      if (!data || data.length === 0) {
+        console.log('No user data found, attempting to fix user data...');
+        
+        try {
+          const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-user-data');
+          
+          if (fixError) {
+            console.error('Error fixing user data:', fixError);
+            return;
+          }
+          
+          console.log('User data fixed successfully:', fixResult);
+          
+          // Retry fetching user data after fix
+          const { data: retryData, error: retryError } = await supabase
+            .from('users')
+            .select('is_trial, trial_end_date, subscription_tier')
+            .eq('id', user.id);
+            
+          if (retryError || !retryData || retryData.length === 0) {
+            console.error('Still no user data after fix attempt');
+            return;
+          }
+          
+          const userData = retryData[0];
+          setTrialInfo(userData);
 
-      if (data.is_trial && data.trial_end_date) {
-        const endDate = new Date(data.trial_end_date);
-        const now = new Date();
-        const diffTime = endDate.getTime() - now.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        setDaysLeft(Math.max(0, diffDays));
+          if (userData.is_trial && userData.trial_end_date) {
+            const endDate = new Date(userData.trial_end_date);
+            const now = new Date();
+            const diffTime = endDate.getTime() - now.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            setDaysLeft(Math.max(0, diffDays));
+          }
+          
+        } catch (fixError) {
+          console.error('Error calling fix-user-data function:', fixError);
+          return;
+        }
+      } else {
+        const userData = data[0];
+        setTrialInfo(userData);
+
+        if (userData.is_trial && userData.trial_end_date) {
+          const endDate = new Date(userData.trial_end_date);
+          const now = new Date();
+          const diffTime = endDate.getTime() - now.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          setDaysLeft(Math.max(0, diffDays));
+        }
       }
     } catch (error) {
       console.error('Error fetching trial info:', error);

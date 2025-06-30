@@ -82,6 +82,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       console.log('Signup successful:', data);
 
+      // Call the handle-new-user Edge Function to set up trial and user data
+      if (data.user) {
+        try {
+          const { error: setupError } = await supabase.functions.invoke('handle-new-user', {
+            body: {
+              userId: data.user.id,
+              email: email.trim(),
+              phone: phone?.trim() || '',
+              businessName: businessName?.trim() || '',
+              referralCode: referralCode || ''
+            }
+          });
+
+          if (setupError) {
+            console.error('Error setting up user trial:', setupError);
+            // Don't fail the signup, but log the error
+          } else {
+            console.log('User trial setup completed successfully');
+          }
+        } catch (setupError) {
+          console.error('Error calling handle-new-user function:', setupError);
+          // Don't fail the signup, but log the error
+        }
+      }
+
       if (data.user && !data.user.email_confirmed_at) {
         toast({
           title: "Check your email!",

@@ -85,7 +85,8 @@ serve(async (req) => {
         role: 'Salesperson',
         subscription_tier: 'Free', // Salespeople don't have their own subscription
         business_name: `${name} (Salesperson)`,
-        active: true
+        is_trial: false,
+        referral_code: `SP${Math.random().toString(36).substring(2, 8).toUpperCase()}`
       })
 
     if (userError) {
