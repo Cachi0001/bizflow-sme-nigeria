@@ -71,11 +71,23 @@ const TeamManagement = () => {
     setAddingMember(true);
 
     try {
-      // Directly insert into team_members table
+      // 1. Create a new user in Supabase Auth with a temporary password
+      const tempPassword = Math.random().toString(36).slice(-8); // Generate a random password
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: formData.email,
+        password: tempPassword,
+        email_confirm: true, // Salesperson email should be confirmed
+        user_metadata: { name: formData.name, role: 'Salesperson' },
+      });
+
+      if (authError) throw authError;
+
+      // 2. Insert into team_members table, linking to the new auth user
       const { error: teamError } = await supabase
         .from("team_members")
         .insert({
           owner_id: user?.id,
+          salesperson_id: authData.user?.id, // Link to the newly created auth user ID
           name: formData.name,
           email: formData.email,
           is_active: true // Default to active
@@ -85,7 +97,7 @@ const TeamManagement = () => {
 
       toast({
         title: "Salesperson added successfully!",
-        description: `${formData.name} has been added to your team.`
+        description: `${formData.name} has been added to your team. Their temporary password is: ${tempPassword}. Please share this with them securely.`
       });
 
       setFormData({ name: "", email: "" });
@@ -133,12 +145,27 @@ const TeamManagement = () => {
     }
 
     try {
-      const { error } = await supabase
+      // 1. Get the salesperson_id from the team_members table
+      const { data: memberData, error: fetchError } = await supabase
+        .from("team_members")
+        .select("salesperson_id")
+        .eq("id", memberId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!memberData || !memberData.salesperson_id) throw new Error("Salesperson ID not found.");
+
+      // 2. Delete the user from Supabase Auth
+      const { error: authDeleteError } = await supabase.auth.admin.deleteUser(memberData.salesperson_id);
+      if (authDeleteError) throw authDeleteError;
+
+      // 3. Delete from team_members table
+      const { error: teamDeleteError } = await supabase
         .from("team_members")
         .delete()
         .eq("id", memberId);
 
-      if (error) throw error;
+      if (teamDeleteError) throw teamDeleteError;
 
       toast({
         title: "Salesperson removed",
@@ -322,5 +349,7 @@ const TeamManagement = () => {
 };
 
 export default TeamManagement;
+
+
 
 

@@ -62,9 +62,12 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const [chartData, setChartData] = useState<any[]>([]);
+
   useEffect(() => {
     if (user) {
       loadDashboardData();
+      loadChartData();
     }
   }, [user]);
 
@@ -117,15 +120,56 @@ const Dashboard = () => {
     }
   };
 
-  const chartData = [
-    { name: 'Jan', invoices: 4000, expenses: 2400 },
-    { name: 'Feb', invoices: 3000, expenses: 1398 },
-    { name: 'Mar', invoices: 2000, expenses: 9800 },
-    { name: 'Apr', invoices: 2780, expenses: 3908 },
-    { name: 'May', invoices: 1890, expenses: 4800 },
-    { name: 'Jun', invoices: 2390, expenses: 3800 },
-    { name: 'Jul', invoices: 3490, expenses: 4300 },
-  ];
+  const loadChartData = async () => {
+    try {
+      const { data: invoicesData, error: invoicesError } = await supabase
+        .from('invoices')
+        .select('amount, created_at')
+        .eq('user_id', user?.id);
+
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('amount, created_at')
+        .eq('user_id', user?.id);
+
+      if (invoicesError) throw invoicesError;
+      if (expensesError) throw expensesError;
+
+      const monthlyData: { [key: string]: { invoices: number; expenses: number } } = {};
+
+      // Initialize data for the last 7 months
+      const today = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const monthName = date.toLocaleString('default', { month: 'short' });
+        monthlyData[monthName] = { invoices: 0, expenses: 0 };
+      }
+
+      invoicesData.forEach(item => {
+        const monthName = new Date(item.created_at).toLocaleString('default', { month: 'short' });
+        if (monthlyData[monthName]) {
+          monthlyData[monthName].invoices += item.amount;
+        }
+      });
+
+      expensesData.forEach(item => {
+        const monthName = new Date(item.created_at).toLocaleString('default', { month: 'short' });
+        if (monthlyData[monthName]) {
+          monthlyData[monthName].expenses += item.amount;
+        }
+      });
+
+      setChartData(Object.keys(monthlyData).map(month => ({ name: month, ...monthlyData[month] })));
+
+    } catch (error) {
+      console.error('Error loading chart data:', error);
+      toast({
+        title: "Error loading chart data",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleUpgrade = async (tier: string) => {
     try {
@@ -364,7 +408,7 @@ const Dashboard = () => {
                 <p>Status: {currentSubscription?.status}</p>
                 {currentSubscription?.end_date && (
                   <p>
-                    Expires on:{' '}
+                    Expires on:' '
                     {new Date(currentSubscription.end_date).toLocaleDateString()}
                   </p>
                 )}
@@ -404,3 +448,5 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+

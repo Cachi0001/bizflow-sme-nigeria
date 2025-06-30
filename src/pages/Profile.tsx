@@ -45,9 +45,9 @@ const Profile = () => {
   const loadUserProfile = async () => {
     try {
       const { data, error } = await supabase
-        .from('users')
-        .select('*, subscriptions(tier, status)')
-        .eq('id', user?.id)
+        .from("users")
+        .select("*, subscriptions(tier, status)")
+        .eq("id", user?.id)
         .single();
 
       if (error) throw error;
@@ -59,7 +59,7 @@ const Profile = () => {
         business_name: data.business_name || ""
       });
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error("Error loading profile:", error);
       toast({
         title: "Error",
         description: "Failed to load profile data",
@@ -76,14 +76,14 @@ const Profile = () => {
 
     try {
       const { error } = await supabase
-        .from('users')
+        .from("users")
         .update({
           phone: formData.phone,
           email: formData.email,
           business_name: formData.business_name,
           updated_at: new Date().toISOString()
         })
-        .eq('id', user?.id);
+        .eq("id", user?.id);
 
       if (error) throw error;
 
@@ -94,7 +94,7 @@ const Profile = () => {
 
       loadUserProfile();
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
       toast({
         title: "Update failed",
         description: "Failed to update profile. Please try again.",
@@ -110,8 +110,8 @@ const Profile = () => {
       const referralLink = `${window.location.origin}/register?ref=${userProfile.referral_code}`;
       navigator.clipboard.writeText(referralLink);
       
-      const rewardAmount = userProfile?.subscription_tier === 'Yearly' ? '₦5,000' : 
-                          userProfile?.subscription_tier === 'Monthly' ? '₦500' : 'no reward';
+      const rewardAmount = userProfile?.subscriptions[0]?.tier === "Yearly" ? "₦5,000" : 
+                          userProfile?.subscriptions[0]?.tier === "Monthly" ? "₦500" : "no reward";
       
       toast({
         title: "Referral link copied!",
@@ -122,14 +122,16 @@ const Profile = () => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/');
+    navigate("/");
   };
 
   const getReferralReward = () => {
-    if (userProfile?.subscription_tier === 'Yearly') return "₦5,000";
-    if (userProfile?.subscription_tier === 'Monthly') return "₦500";
+    if (userProfile?.subscriptions[0]?.tier === "Yearly") return "₦5,000";
+    if (userProfile?.subscriptions[0]?.tier === "Monthly") return "₦500";
     return "None";
   };
+
+  const showReferralSection = userProfile?.subscriptions[0]?.tier !== "Free";
 
   if (loading) {
     return (
@@ -150,7 +152,7 @@ const Profile = () => {
           <div className="flex items-center justify-between py-4">
             <Button 
               variant="ghost" 
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate("/dashboard")}
               className="flex items-center gap-2"
               size="sm"
             >
@@ -182,7 +184,7 @@ const Profile = () => {
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-              {userProfile?.business_name || 'Your Profile'}
+              {userProfile?.business_name || "Your Profile"}
             </h1>
             <p className="text-sm sm:text-base text-gray-600">Manage your business information</p>
           </div>
@@ -283,8 +285,8 @@ const Profile = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm sm:text-base text-gray-600">Current Plan:</span>
-                <Badge variant={userProfile?.subscription_tier === 'Free' ? 'secondary' : 'default'}>
-                  {userProfile?.subscription_tier || 'Free'} Plan
+                <Badge variant={userProfile?.subscriptions[0]?.tier === "Free" ? "secondary" : "default"}>
+                  {userProfile?.subscriptions[0]?.tier || "Free"} Plan
                 </Badge>
               </div>
               
@@ -295,10 +297,10 @@ const Profile = () => {
                 </Badge>
               </div>
 
-              {userProfile?.subscription_tier === 'Free' && (
+              {!showReferralSection && (
                 <Button 
                   className="w-full bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
-                  onClick={() => navigate('/pricing')}
+                  onClick={() => navigate("/pricing")}
                   size="sm"
                 >
                   Upgrade to Earn Referral Rewards
@@ -315,28 +317,33 @@ const Profile = () => {
                 Referral Program
               </CardTitle>
               <CardDescription className="text-sm">
-                {getReferralReward() !== "None" ? `Earn ${getReferralReward()} per referral` : "Upgrade to earn referral rewards"}
+                {showReferralSection ? `Earn ${getReferralReward()} per referral` : "Upgrade to earn referral rewards"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Your Referral Code:</Label>
-                <div className="flex items-center gap-2">
-                  <Input 
-                    value={userProfile?.referral_code || ''} 
-                    readOnly 
-                    className="font-mono text-center text-sm"
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={copyReferralLink}
-                    disabled={getReferralReward() === "None"}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
+              {showReferralSection ? (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">Your Referral Code:</Label>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      value={userProfile?.referral_code || ""} 
+                      readOnly 
+                      className="font-mono text-center text-sm"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={copyReferralLink}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">Upgrade your plan to access the referral program.</p>
+                </div>
+              )}
               
               <div className="text-xs sm:text-sm text-gray-600 space-y-1">
                 <p>• Monthly Plan: Earn ₦500 per referral</p>
@@ -345,11 +352,11 @@ const Profile = () => {
                 <p>• No cap on total earnings</p>
               </div>
 
-              {getReferralReward() === "None" && (
+              {!showReferralSection && (
                 <Button 
                   variant="outline"
                   className="w-full"
-                  onClick={() => navigate('/pricing')}
+                  onClick={() => navigate("/pricing")}
                   size="sm"
                 >
                   <Wallet className="mr-2 h-4 w-4" />
@@ -385,3 +392,5 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
