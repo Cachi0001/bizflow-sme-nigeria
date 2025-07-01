@@ -432,10 +432,12 @@ export type Database = {
           deleted_at: string | null
           email: string | null
           id: string
+          is_trial: boolean | null
           phone: string
           referral_code: string | null
           role: string | null
           subscription_tier: string | null
+          trial_end_date: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -446,10 +448,12 @@ export type Database = {
           deleted_at?: string | null
           email?: string | null
           id?: string
+          is_trial?: boolean | null
           phone: string
           referral_code?: string | null
           role?: string | null
           subscription_tier?: string | null
+          trial_end_date?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -460,10 +464,12 @@ export type Database = {
           deleted_at?: string | null
           email?: string | null
           id?: string
+          is_trial?: boolean | null
           phone?: string
           referral_code?: string | null
           role?: string | null
           subscription_tier?: string | null
+          trial_end_date?: string | null
           updated_at?: string
           updated_by?: string | null
         }

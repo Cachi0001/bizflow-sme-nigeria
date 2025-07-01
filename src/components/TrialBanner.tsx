@@ -26,23 +26,23 @@ const TrialBanner = () => {
     try {
       const { data: userData, error } = await supabase
         .from("users")
-        .select("subscription_tier, created_at")
+        .select("is_trial, trial_end_date, subscription_tier")
         .eq("id", user?.id)
         .single();
 
       if (error || !userData) return;
 
-      // Check if user is still on Free plan (indicating trial period)
-      if (userData.subscription_tier === "Free") {
-        const createdDate = new Date(userData.created_at);
+      // Check if user is on trial
+      if (userData.is_trial && userData.trial_end_date) {
+        const endDate = new Date(userData.trial_end_date);
         const now = new Date();
-        const daysSinceCreation = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-        const daysLeft = Math.max(0, 7 - daysSinceCreation);
+        const diffTime = endDate.getTime() - now.getTime();
+        const daysLeft = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
         setTrialInfo({
           isActive: daysLeft > 0,
           daysLeft,
-          planTier: "Weekly Plan Features",
+          planTier: userData.subscription_tier || "Weekly Plan Features",
         });
       }
     } catch (error) {
