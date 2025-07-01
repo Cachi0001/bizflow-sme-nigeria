@@ -46,6 +46,20 @@ interface SalesSummary {
   totalTransactions: number;
 }
 
+interface InvoiceData {
+  id: string;
+  created_at: string;
+  amount: number;
+  status: string;
+  client_name: string;
+}
+
+interface PaymentData {
+  invoice_id: string;
+  payment_method: string;
+  amount: number;
+}
+
 const SalesReport = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [salesData, setSalesData] = useState<SalesData[]>([]);
@@ -76,13 +90,7 @@ const SalesReport = () => {
 
       const { data: invoicesData, error: invoicesError } = await supabase
         .from("invoices")
-        .select(`
-          id,
-          created_at,
-          amount,
-          status,
-          client_name
-        `)
+        .select("id, created_at, amount, status, client_name")
         .eq("user_id", user?.id)
         .gte("created_at", startDate)
         .lte("created_at", endDate)
@@ -94,9 +102,11 @@ const SalesReport = () => {
         throw new Error("Failed to fetch invoice data");
       }
 
+      const invoices = invoicesData as InvoiceData[] || [];
+
       // Get payment information for these invoices
-      const invoiceIds = (invoicesData || []).map(invoice => invoice.id);
-      let paymentsData: any[] = [];
+      const invoiceIds = invoices.map(invoice => invoice.id);
+      let paymentsData: PaymentData[] = [];
       
       if (invoiceIds.length > 0) {
         const { data: payments, error: paymentsError } = await supabase
@@ -108,12 +118,12 @@ const SalesReport = () => {
           console.error("Error fetching payments:", paymentsError);
           // Continue without payment method data
         } else {
-          paymentsData = payments || [];
+          paymentsData = payments as PaymentData[] || [];
         }
       }
 
       // Transform the data to match our SalesData interface
-      const transformedData: SalesData[] = (invoicesData || []).map(invoice => {
+      const transformedData: SalesData[] = invoices.map(invoice => {
         const payment = paymentsData.find(p => p.invoice_id === invoice.id);
         return {
           id: invoice.id,
@@ -126,7 +136,7 @@ const SalesReport = () => {
           description: 'Product/Service Sale', // Default description since column doesn't exist
           quantity: 1, // Default quantity since column doesn't exist
           amount: Number(invoice.amount) || 0,
-          payment_method: payment?.payment_method || 'Cash',
+          payment_method: (payment?.payment_method as 'Cash' | 'Bank Transfer' | 'Mobile Money') || 'Cash',
           remarks: ''
         };
       });
