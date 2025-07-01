@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -29,7 +30,7 @@ serve(async (req) => {
       .eq('status', 'Active')
       .single();
 
-    if (subError && subError.code !== 'PGRST116') { // PGRST116 means no rows found
+    if (subError && subError.code !== 'PGRST116') {
       console.error('Error fetching current subscription:', subError);
       throw new Error('Failed to fetch current subscription');
     }
@@ -148,9 +149,9 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: userEmail, // User's email for Paystack
+        email: userEmail,
         amount: finalAmount, // in kobo
-        callback_url: Deno.env.get('PAYSTACK_CALLBACK_URL') ?? 'http://localhost:3000/dashboard', // Redirect after payment
+        callback_url: Deno.env.get('PAYSTACK_CALLBACK_URL') ?? 'https://bizflow-sme-nigeria.lovable.app/dashboard',
         metadata: {
           userId: userId,
           newPlan: newPlan,
@@ -193,5 +194,3 @@ serve(async (req) => {
     );
   }
 });
-
-
