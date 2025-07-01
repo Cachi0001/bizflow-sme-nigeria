@@ -54,12 +54,6 @@ interface InvoiceData {
   client_name: string;
 }
 
-interface PaymentData {
-  invoice_id: string;
-  payment_method: string;
-  amount: number;
-}
-
 const SalesReport = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [salesData, setSalesData] = useState<SalesData[]>([]);
@@ -102,29 +96,10 @@ const SalesReport = () => {
         throw new Error("Failed to fetch invoice data");
       }
 
-      const invoices = invoicesData as InvoiceData[] || [];
-
-      // Get payment information for these invoices
-      const invoiceIds = invoices.map(invoice => invoice.id);
-      let paymentsData: PaymentData[] = [];
-      
-      if (invoiceIds.length > 0) {
-        const { data: payments, error: paymentsError } = await supabase
-          .from("payments")
-          .select("invoice_id, payment_method, amount")
-          .in("invoice_id", invoiceIds);
-
-        if (paymentsError) {
-          console.error("Error fetching payments:", paymentsError);
-          // Continue without payment method data
-        } else {
-          paymentsData = payments as PaymentData[] || [];
-        }
-      }
+      const invoices: InvoiceData[] = invoicesData || [];
 
       // Transform the data to match our SalesData interface
       const transformedData: SalesData[] = invoices.map(invoice => {
-        const payment = paymentsData.find(p => p.invoice_id === invoice.id);
         return {
           id: invoice.id,
           date: new Date(invoice.created_at).toLocaleDateString('en-NG', {
@@ -136,7 +111,7 @@ const SalesReport = () => {
           description: 'Product/Service Sale', // Default description since column doesn't exist
           quantity: 1, // Default quantity since column doesn't exist
           amount: Number(invoice.amount) || 0,
-          payment_method: (payment?.payment_method as 'Cash' | 'Bank Transfer' | 'Mobile Money') || 'Cash',
+          payment_method: 'Cash', // Default to Cash since we don't have payment method data linked
           remarks: ''
         };
       });
