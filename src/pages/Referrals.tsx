@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -81,7 +80,7 @@ const Referrals = () => {
           currentReferralCode = data.referral_code;
           setReferralCode(currentReferralCode);
         } else {
-          // Generate a new referral code if one doesn\'t exist
+          // Generate a new referral code if one doesn't exist
           const newCode = `REF-${user?.id.substring(0, 8)}`; // Use user ID for consistent code
           const { error: updateError } = await supabase
             .from("users")
@@ -156,7 +155,7 @@ const Referrals = () => {
     if (amount > availableBalance) {
       toast({
         title: "Insufficient balance",
-        description: "You don\'t have enough balance for this withdrawal.",
+        description: "You don't have enough balance for this withdrawal.",
         variant: "destructive"
       });
       return;
@@ -449,7 +448,7 @@ const Referrals = () => {
                         {new Date(earning.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <Badge variant={earning.status === "pending" ? "warning" : "success"}>
+                    <Badge variant={earning.status === "pending" ? "secondary" : "default"}>
                       {earning.status}
                     </Badge>
                   </div>
@@ -464,5 +463,3 @@ const Referrals = () => {
 };
 
 export default Referrals;
-
-

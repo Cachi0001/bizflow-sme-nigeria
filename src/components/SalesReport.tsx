@@ -80,12 +80,8 @@ const SalesReport = () => {
           id,
           created_at,
           amount,
-          description,
-          quantity,
           status,
-          clients!inner (
-            name
-          )
+          client_name
         `)
         .eq("user_id", user?.id)
         .gte("created_at", startDate)
@@ -126,9 +122,9 @@ const SalesReport = () => {
             month: 'short',
             day: 'numeric'
           }),
-          client_name: invoice.clients?.name || 'Walk-in Customer',
-          description: invoice.description || 'Product/Service Sale',
-          quantity: invoice.quantity || 1,
+          client_name: invoice.client_name || 'Walk-in Customer',
+          description: 'Product/Service Sale', // Default description since column doesn't exist
+          quantity: 1, // Default quantity since column doesn't exist
           amount: Number(invoice.amount) || 0,
           payment_method: payment?.payment_method || 'Cash',
           remarks: ''
@@ -712,4 +708,3 @@ const SalesReport = () => {
 };
 
 export default SalesReport;
-

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -139,13 +140,13 @@ const Dashboard = () => {
       }
 
       // Load referral earnings
-      const { data: referrals, error: referralsError } = await supabase
-        .from("referrals")
+      const { data: referralEarnings, error: referralEarningsError } = await supabase
+        .from("referral_earnings")
         .select("*")
         .eq("referrer_id", user?.id);
 
-      if (referralsError) {
-        console.error("Error fetching referrals:", referralsError);
+      if (referralEarningsError) {
+        console.error("Error fetching referral earnings:", referralEarningsError);
       }
 
       // Calculate stats
@@ -153,14 +154,14 @@ const Dashboard = () => {
       const pendingInvoices = invoices?.filter(inv => inv.status === 'Pending')?.length || 0;
       const totalExpenses = expenses?.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0) || 0;
       const totalPayments = payments?.reduce((sum, pay) => sum + (Number(pay.amount) || 0), 0) || 0;
-      const referralEarnings = referrals?.reduce((sum, ref) => sum + (Number(ref.earnings) || 0), 0) || 0;
+      const referralEarningsAmount = referralEarnings?.reduce((sum, ref) => sum + (Number(ref.amount) || 0), 0) || 0;
 
       setStats({
         totalInvoices,
         pendingInvoices,
         totalExpenses,
         totalPayments,
-        referralEarnings,
+        referralEarnings: referralEarningsAmount,
       });
 
       // Set subscription info from user data
@@ -314,4 +315,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
