@@ -68,6 +68,9 @@ serve(async (req) => {
 
     if (authError2) {
       console.error('Auth error:', authError2)
+      if (authError2.message?.includes('email_exists') || authError2.message?.includes('already been registered')) {
+        throw new Error('A user with this email address already exists. Please use a different email.')
+      }
       throw authError2
     }
 

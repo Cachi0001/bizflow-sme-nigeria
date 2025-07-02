@@ -191,9 +191,9 @@ const Pricing = () => {
                 <Button 
                   variant="secondary" 
                   className="bg-white text-green-600 hover:bg-gray-100"
-                  onClick={() => user ? navigate("/dashboard") : navigate("/register")}
+                  onClick={() => navigate("/register")}
                 >
-                  {user ? "Back to Dashboard" : "Start Your Free Trial"}
+                  Start Your Free Trial
                 </Button>
               </CardContent>
             </Card>

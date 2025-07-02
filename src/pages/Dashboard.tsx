@@ -309,6 +309,73 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
+        {/* Quick Access Feature Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/products")}>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl mb-2">📦</div>
+              <h3 className="font-semibold">Products</h3>
+              <p className="text-sm text-muted-foreground">Manage inventory</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/invoices")}>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl mb-2">📄</div>
+              <h3 className="font-semibold">Invoices</h3>
+              <p className="text-sm text-muted-foreground">Create & send invoices</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/expenses")}>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl mb-2">💸</div>
+              <h3 className="font-semibold">Expenses</h3>
+              <p className="text-sm text-muted-foreground">Track expenses</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/clients")}>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl mb-2">👥</div>
+              <h3 className="font-semibold">Clients</h3>
+              <p className="text-sm text-muted-foreground">Manage customers</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/payments")}>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl mb-2">💳</div>
+              <h3 className="font-semibold">Payments</h3>
+              <p className="text-sm text-muted-foreground">Record payments</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/sales-report")}>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl mb-2">📊</div>
+              <h3 className="font-semibold">Sales Report</h3>
+              <p className="text-sm text-muted-foreground">View analytics</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/referrals")}>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl mb-2">🎁</div>
+              <h3 className="font-semibold">Referrals</h3>
+              <p className="text-sm text-muted-foreground">Earn rewards</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/team")}>
+            <CardContent className="p-6 text-center">
+              <div className="text-2xl mb-2">👨‍💼</div>
+              <h3 className="font-semibold">Team</h3>
+              <p className="text-sm text-muted-foreground">Manage salespeople</p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Sales Report Section */}
         <SalesReport />
       </div>
