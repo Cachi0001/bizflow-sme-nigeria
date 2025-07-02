@@ -260,10 +260,17 @@ export const ProductForm = ({ product, onSave, onCancel }: ProductFormProps) => 
 
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <div className="flex gap-2">
+        <Input
+          id="category"
+          placeholder="Or type new category"
+          value={formData.category}
+          onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+          className="w-full"
+        />
+        {categories.length > 0 && (
           <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Select or enter category" />
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select existing category" />
             </SelectTrigger>
             <SelectContent>
               {categories.map((category) => (
@@ -273,13 +280,7 @@ export const ProductForm = ({ product, onSave, onCancel }: ProductFormProps) => 
               ))}
             </SelectContent>
           </Select>
-          <Input
-            placeholder="Or type new category"
-            value={formData.category}
-            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-            className="flex-1"
-          />
-        </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -388,7 +389,7 @@ export const ProductForm = ({ product, onSave, onCancel }: ProductFormProps) => 
         <Button
           type="submit"
           disabled={loading}
-          className="flex-1 bg-primary hover:bg-primary-dark"
+          className="flex-1 bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white"
         >
           {loading ? (
             <>

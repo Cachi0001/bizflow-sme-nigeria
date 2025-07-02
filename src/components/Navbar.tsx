@@ -37,15 +37,15 @@ export const Navbar = () => {
   ];
 
   const dashboardItems = user ? [
-    { name: "Dashboard", path: "/dashboard" },
-    { name: "Products", path: "/products" },
-    { name: "Invoices", path: "/invoices" },
-    { name: "Expenses", path: "/expenses" },
-    { name: "Clients", path: "/clients" },
-    { name: "Payments", path: "/payments" },
-    { name: "Sales Report", path: "/sales-report" },
-    { name: "Referrals", path: "/referrals" },
-    { name: "Team", path: "/team" },
+    { name: "Dashboard", path: "/dashboard", description: "Overview & analytics" },
+    { name: "Products", path: "/products", description: "Manage inventory & stock" },
+    { name: "Invoices", path: "/invoices", description: "Create & manage invoices" },
+    { name: "Expenses", path: "/expenses", description: "Track business expenses" },
+    { name: "Clients", path: "/clients", description: "Manage customer database" },
+    { name: "Payments", path: "/payments", description: "Record payments received" },
+    { name: "Sales Report", path: "/sales-report", description: "View sales analytics" },
+    { name: "Referrals", path: "/referrals", description: "Manage referral program" },
+    { name: "Team", path: "/team", description: "Team management" },
   ] : [];
 
   return (
@@ -54,10 +54,10 @@ export const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-blue-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">B</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">Bizflow</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-500 bg-clip-text text-transparent">Bizflow</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -97,7 +97,7 @@ export const Navbar = () => {
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button size="sm" className="bg-primary hover:bg-primary-dark">
+                  <Button size="sm" className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600">
                     Sign Up
                   </Button>
                 </Link>
@@ -182,7 +182,7 @@ export const Navbar = () => {
                       </Button>
                     </Link>
                     <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                      <Button className="w-full bg-primary hover:bg-primary-dark">
+                      <Button className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600">
                         Sign Up
                       </Button>
                     </Link>

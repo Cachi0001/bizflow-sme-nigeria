@@ -176,7 +176,7 @@ const Payments = () => {
             
             <Button 
               onClick={() => setShowCreateForm(true)}
-              className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+              className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
             >
               <Plus className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Record Payment</span>
@@ -292,7 +292,7 @@ const Payments = () => {
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <Button 
                     type="submit" 
-                    className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                    className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
                     disabled={creating}
                   >
                     {creating ? (
@@ -330,7 +330,7 @@ const Payments = () => {
             {!showCreateForm && (
               <Button 
                 onClick={() => setShowCreateForm(true)}
-                className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Record Payment
@@ -348,7 +348,7 @@ const Payments = () => {
                 </p>
                 <Button 
                   onClick={() => setShowCreateForm(true)}
-                  className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                  className="bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Record Your First Payment
