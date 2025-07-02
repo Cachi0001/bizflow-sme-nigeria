@@ -112,6 +112,54 @@ export type Database = {
           },
         ]
       }
+      invoice_items: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -227,6 +275,93 @@ export type Database = {
           },
         ]
       }
+      product_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string | null
+          cost_price: number | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          low_stock_threshold: number | null
+          name: string
+          price: number
+          sku: string | null
+          stock_quantity: number
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          low_stock_threshold?: number | null
+          name: string
+          price?: number
+          sku?: string | null
+          stock_quantity?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          low_stock_threshold?: number | null
+          name?: string
+          price?: number
+          sku?: string | null
+          stock_quantity?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       referral_earnings: {
         Row: {
           amount: number
@@ -322,6 +457,59 @@ export type Database = {
             columns: ["referrer_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          movement_type: string
+          notes: string | null
+          product_id: string
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+          total_amount: number | null
+          unit_price: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          movement_type: string
+          notes?: string | null
+          product_id: string
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+          total_amount?: number | null
+          unit_price?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          movement_type?: string
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          total_amount?: number | null
+          unit_price?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -530,6 +718,16 @@ export type Database = {
       generate_referral_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_low_stock_products: {
+        Args: { user_id_param: string }
+        Returns: {
+          id: string
+          name: string
+          sku: string
+          stock_quantity: number
+          low_stock_threshold: number
+        }[]
       }
       is_owner: {
         Args: { user_id_param: string }
