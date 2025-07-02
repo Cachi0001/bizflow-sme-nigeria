@@ -147,9 +147,9 @@ const Index = () => {
               ) : (
                 <>
                   <Button variant="ghost" onClick={() => navigate("/login")}>Login</Button>
-                  <Button onClick={() => navigate("/register")} className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600">
-                    Get Started Free
-                  </Button>
+                   <Button onClick={() => navigate("/register")} className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600">
+                     Get Started Free
+                   </Button>
                 </>
               )}
             </nav>
@@ -158,9 +158,9 @@ const Index = () => {
               variant="outline" 
               size="sm" 
               className="md:hidden"
-              onClick={() => navigate("/register")}
+              onClick={() => navigate(user ? "/dashboard" : "/register")}
             >
-              Sign Up
+              {user ? "Dashboard" : "Sign Up"}
             </Button>
           </div>
         </div>
@@ -185,10 +185,10 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Button 
                 size="lg" 
-                onClick={() => navigate("/register")}
+                onClick={() => navigate(user ? "/dashboard" : "/register")}
                 className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               >
-                Get Started Free
+                {user ? "Go to Dashboard" : "Get Started Free"}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               
@@ -392,10 +392,10 @@ const Index = () => {
           </p>
           <Button 
             size="lg" 
-            onClick={() => navigate("/register")}
+            onClick={() => navigate(user ? "/dashboard" : "/register")}
             className="bg-white text-green-600 hover:bg-green-50 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
           >
-            Get Started Now
+            {user ? "Go to Dashboard" : "Get Started Now"}
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
