@@ -75,7 +75,7 @@ serve(async (req) => {
       const newUserData = {
         id: user.id,
         email: user.email,
-        phone: user.user_metadata?.phone || '',
+        phone: user.user_metadata?.phone || null, // Use null instead of empty string
         role: 'Owner',
         subscription_tier: 'Free', // Start with Free, trial gives access to Weekly features
         business_name: user.user_metadata?.business_name || 'My Business',

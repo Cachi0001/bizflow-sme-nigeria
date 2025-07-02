@@ -31,10 +31,10 @@ serve(async (req) => {
       .insert({
         id: record.id,
         email: record.email,
-        phone: record.raw_user_meta_data?.phone || '',
+        phone: record.raw_user_meta_data?.phone || null, // Use null instead of empty string
         business_name: record.raw_user_meta_data?.business_name || '',
         role: record.raw_user_meta_data?.role || 'Owner',
-        subscription_tier: 'Weekly', // Start with Weekly tier for 7-day trial
+        subscription_tier: 'Free', // Start with Free tier, trial gives Weekly features
         trial_end_date: trialEndDate.toISOString(),
         is_trial: true,
         created_at: new Date().toISOString(),

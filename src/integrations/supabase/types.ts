@@ -433,7 +433,7 @@ export type Database = {
           email: string | null
           id: string
           is_trial: boolean | null
-          phone: string
+          phone: string | null
           referral_code: string | null
           role: string | null
           subscription_tier: string | null
@@ -449,7 +449,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_trial?: boolean | null
-          phone: string
+          phone?: string | null
           referral_code?: string | null
           role?: string | null
           subscription_tier?: string | null
@@ -465,7 +465,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_trial?: boolean | null
-          phone?: string
+          phone?: string | null
           referral_code?: string | null
           role?: string | null
           subscription_tier?: string | null
