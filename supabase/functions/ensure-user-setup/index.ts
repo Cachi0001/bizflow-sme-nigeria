@@ -75,9 +75,9 @@ serve(async (req) => {
       const newUserData = {
         id: user.id,
         email: user.email,
-        phone: user.user_metadata?.phone || null,
+        phone: user.user_metadata?.phone || '',
         role: 'Owner',
-        subscription_tier: 'Weekly',
+        subscription_tier: 'Free', // Start with Free plan, trial gives Weekly features
         business_name: user.user_metadata?.business_name || 'My Business',
         is_trial: true,
         trial_end_date: trialEndDate.toISOString(),
@@ -108,7 +108,7 @@ serve(async (req) => {
       const updateData: any = {
         is_trial: true,
         trial_end_date: trialEndDate.toISOString(),
-        subscription_tier: 'Weekly',
+        subscription_tier: 'Free', // Start with Free plan, trial gives Weekly features
         updated_at: new Date().toISOString()
       }
 
