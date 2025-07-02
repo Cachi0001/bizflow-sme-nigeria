@@ -61,6 +61,16 @@ const Pricing = () => {
     }
   };
 
+  // Check user's current subscription to determine button states
+  const getUserCurrentPlan = () => {
+    if (!user) return 'Free';
+    // This would be fetched from user data or subscription info
+    // For now, return 'Free' as default
+    return 'Free';
+  };
+
+  const currentPlan = getUserCurrentPlan();
+
   const plans = [
     {
       name: "Free",
@@ -80,8 +90,8 @@ const Pricing = () => {
         "Basic features only",
         "No advanced analytics",
       ],
-      buttonText: "Current Plan",
-      disabled: true,
+      buttonText: currentPlan === "Free" ? "Current Plan" : "Downgrade to Free",
+      disabled: currentPlan === "Free",
     },
     {
       name: "Silver Weekly",
@@ -98,9 +108,10 @@ const Pricing = () => {
         "Priority email support",
         "Basic team features",
       ],
-      buttonText: "Start Weekly Plan",
+      buttonText: currentPlan === "Weekly" ? "Current Plan" : "Start Weekly Plan",
       planType: "Weekly",
       amount: 1400,
+      disabled: currentPlan === "Weekly",
     },
     {
       name: "Silver Monthly",
@@ -118,9 +129,10 @@ const Pricing = () => {
         "Priority email support",
         "Team management",
       ],
-      buttonText: "Start Monthly Plan",
+      buttonText: currentPlan === "Monthly" ? "Current Plan" : "Start Monthly Plan",
       planType: "Monthly",
       amount: 4500,
+      disabled: currentPlan === "Monthly",
     },
     {
       name: "Silver Yearly",
@@ -139,9 +151,10 @@ const Pricing = () => {
         "Full team management",
         "Advanced analytics",
       ],
-      buttonText: "Start Yearly Plan",
+      buttonText: currentPlan === "Yearly" ? "Current Plan" : "Start Yearly Plan",
       planType: "Yearly",
       amount: 50000,
+      disabled: currentPlan === "Yearly",
     },
   ];
 

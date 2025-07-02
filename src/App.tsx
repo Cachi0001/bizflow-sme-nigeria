@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -34,24 +35,26 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/expenses" element={<Expenses />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/payments" element={<Payments />} />
-            <Route path="/transactions" element={<Transactions />} />
-            <Route path="/referrals" element={<Referrals />} />
-            <Route path="/sales-report" element={<SalesReport />} />
-            <Route path="/team" element={<TeamManagement />} />
-            <Route path="/features" element={<Features />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Index />} />
+              <Route path="register" element={<Register />} />
+              <Route path="login" element={<Login />} />
+              <Route path="reset-password" element={<ResetPassword />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="products" element={<Products />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="invoices" element={<Invoices />} />
+              <Route path="expenses" element={<Expenses />} />
+              <Route path="clients" element={<Clients />} />
+              <Route path="payments" element={<Payments />} />
+              <Route path="transactions" element={<Transactions />} />
+              <Route path="referrals" element={<Referrals />} />
+              <Route path="sales-report" element={<SalesReport />} />
+              <Route path="team" element={<TeamManagement />} />
+              <Route path="features" element={<Features />} />
+              <Route path="pricing" element={<Pricing />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
           </Routes>
         </BrowserRouter>
       </AuthProvider>
