@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,14 +62,35 @@ const Pricing = () => {
   };
 
   // Check user's current subscription to determine button states
-  const getUserCurrentPlan = () => {
-    if (!user) return 'Free';
-    // This would be fetched from user data or subscription info
-    // For now, return 'Free' as default
-    return 'Free';
-  };
+  const [userSubscription, setUserSubscription] = useState<string>('Free');
 
-  const currentPlan = getUserCurrentPlan();
+  useEffect(() => {
+    const fetchUserSubscription = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: userData, error } = await supabase
+          .from("users")
+          .select("subscription_tier, is_trial")
+          .eq("id", user.id)
+          .single();
+
+        if (!error && userData) {
+          if (userData.is_trial) {
+            setUserSubscription('Weekly');
+          } else {
+            setUserSubscription(userData.subscription_tier || 'Free');
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user subscription:", error);
+      }
+    };
+
+    fetchUserSubscription();
+  }, [user]);
+
+  const currentPlan = userSubscription;
 
   const plans = [
     {
