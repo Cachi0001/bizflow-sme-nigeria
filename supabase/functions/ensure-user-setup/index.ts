@@ -77,7 +77,7 @@ serve(async (req) => {
         email: user.email,
         phone: user.user_metadata?.phone || '',
         role: 'Owner',
-        subscription_tier: 'Free', // Start with Free plan, trial gives Weekly features
+        subscription_tier: 'Free', // Start with Free, trial gives access to Weekly features
         business_name: user.user_metadata?.business_name || 'My Business',
         is_trial: true,
         trial_end_date: trialEndDate.toISOString(),
@@ -108,7 +108,7 @@ serve(async (req) => {
       const updateData: any = {
         is_trial: true,
         trial_end_date: trialEndDate.toISOString(),
-        subscription_tier: 'Free', // Start with Free plan, trial gives Weekly features
+        subscription_tier: 'Free', // Start with Free, trial gives access to Weekly features
         updated_at: new Date().toISOString()
       }
 
@@ -145,7 +145,7 @@ serve(async (req) => {
         .from('subscriptions')
         .insert({
           user_id: user.id,
-          plan: userData?.subscription_tier || 'Weekly',
+          plan: userData?.subscription_tier || 'Free',
           status: userData?.is_trial ? 'trial' : 'active',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
