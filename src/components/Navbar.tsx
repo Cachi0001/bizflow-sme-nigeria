@@ -53,7 +53,7 @@ export const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-green-600 to-blue-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">B</span>
             </div>
             <span className="text-xl font-bold text-gray-900">Bizflow</span>
@@ -65,8 +65,8 @@ export const Navbar = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`text-sm font-medium transition-colors hover:text-green-600 ${
-                  isActivePath(item.path) ? "text-green-600" : "text-gray-700"
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActivePath(item.path) ? "text-primary" : "text-gray-700"
                 }`}
               >
                 {item.name}
@@ -77,8 +77,8 @@ export const Navbar = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`text-sm font-medium transition-colors hover:text-green-600 ${
-                  isActivePath(item.path) ? "text-green-600" : "text-gray-700"
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActivePath(item.path) ? "text-primary" : "text-gray-700"
                 }`}
               >
                 {item.name}
@@ -96,7 +96,7 @@ export const Navbar = () => {
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button size="sm" className="bg-gradient-to-r from-green-600 to-blue-500">
+                  <Button size="sm" className="bg-primary hover:bg-primary-dark">
                     Sign Up
                   </Button>
                 </Link>
@@ -106,7 +106,7 @@ export const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-gradient-to-r from-green-600 to-blue-500 text-white">
+                      <AvatarFallback className="bg-primary text-white">
                         {user.email?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
@@ -150,8 +150,8 @@ export const Navbar = () => {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className={`block px-3 py-2 text-base font-medium transition-colors hover:text-green-600 hover:bg-gray-50 rounded-md ${
-                    isActivePath(item.path) ? "text-green-600 bg-green-50" : "text-gray-700"
+                  className={`block px-3 py-2 text-base font-medium transition-colors hover:text-primary hover:bg-secondary rounded-md ${
+                    isActivePath(item.path) ? "text-primary bg-secondary" : "text-gray-700"
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -163,8 +163,8 @@ export const Navbar = () => {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className={`block px-3 py-2 text-base font-medium transition-colors hover:text-green-600 hover:bg-gray-50 rounded-md ${
-                    isActivePath(item.path) ? "text-green-600 bg-green-50" : "text-gray-700"
+                  className={`block px-3 py-2 text-base font-medium transition-colors hover:text-primary hover:bg-secondary rounded-md ${
+                    isActivePath(item.path) ? "text-primary bg-secondary" : "text-gray-700"
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -181,7 +181,7 @@ export const Navbar = () => {
                       </Button>
                     </Link>
                     <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                      <Button className="w-full bg-gradient-to-r from-green-600 to-blue-500">
+                      <Button className="w-full bg-primary hover:bg-primary-dark">
                         Sign Up
                       </Button>
                     </Link>
@@ -190,7 +190,7 @@ export const Navbar = () => {
                   <div className="px-3 space-y-2">
                     <div className="flex items-center pb-2">
                       <Avatar className="h-8 w-8 mr-3">
-                        <AvatarFallback className="bg-gradient-to-r from-green-600 to-blue-500 text-white">
+                        <AvatarFallback className="bg-primary text-white">
                           {user.email?.charAt(0).toUpperCase() || "U"}
                         </AvatarFallback>
                       </Avatar>

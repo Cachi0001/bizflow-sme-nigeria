@@ -176,19 +176,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      // Clear local state immediately for better UX
+      setUser(null);
+      setSession(null);
+      
+      // Attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      
+      // Even if there's an error, we've cleared local state
+      // This handles cases where the session is already expired
+      if (error && !error.message.includes('session')) {
+        console.warn('Logout warning:', error);
+      }
       
       toast({
         title: "Logged out",
         description: "You have been successfully logged out."
       });
     } catch (error: any) {
-      console.error('Logout error:', error);
+      // Even on error, clear local state and show success
+      // because the user clicked logout and expects to be logged out
+      console.warn('Logout error (handled gracefully):', error);
+      setUser(null);
+      setSession(null);
+      
       toast({
-        title: "Logout failed",
-        description: error.message || "Failed to log out. Please try again.",
-        variant: "destructive"
+        title: "Logged out",
+        description: "You have been logged out."
       });
     }
   };

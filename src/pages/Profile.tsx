@@ -48,21 +48,33 @@ const Profile = () => {
         .from("users")
         .select("*, subscriptions(tier, status)")
         .eq("id", user?.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
-      setUserProfile(data);
-      setFormData({
-        phone: data.phone || "",
-        email: data.email || "",
-        business_name: data.business_name || ""
-      });
+      if (data) {
+        setUserProfile(data);
+        setFormData({
+          phone: data.phone || "",
+          email: data.email || "",
+          business_name: data.business_name || ""
+        });
+      } else {
+        // User record doesn't exist, create it
+        const { error: createError } = await supabase.functions.invoke('ensure-user-setup');
+        if (createError) {
+          console.error("Error creating user profile:", createError);
+        } else {
+          // Retry loading after creating
+          loadUserProfile();
+          return;
+        }
+      }
     } catch (error) {
       console.error("Error loading profile:", error);
       toast({
         title: "Error",
-        description: "Failed to load profile data",
+        description: "Failed to load profile data. Please try refreshing the page.",
         variant: "destructive"
       });
     } finally {
@@ -135,9 +147,9 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 flex items-center justify-center">
         <div className="flex items-center gap-2">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <span className="text-gray-600">Loading profile...</span>
         </div>
       </div>
@@ -145,7 +157,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -161,10 +173,10 @@ const Profile = () => {
             </Button>
             
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xs sm:text-sm">B</span>
               </div>
-              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+              <span className="text-xl sm:text-2xl font-bold text-primary">
                 Bizflow
               </span>
             </div>
@@ -179,7 +191,7 @@ const Profile = () => {
       <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Profile Header */}
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-600 to-orange-500 rounded-full flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary rounded-full flex items-center justify-center mx-auto">
             <User className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
           </div>
           <div>
@@ -252,7 +264,7 @@ const Profile = () => {
 
               <Button 
                 type="submit" 
-                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                className="w-full sm:w-auto bg-primary hover:bg-primary-dark"
                 disabled={saving}
                 size="sm"
               >
@@ -299,7 +311,7 @@ const Profile = () => {
 
               {!showReferralSection && (
                 <Button 
-                  className="w-full bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                  className="w-full bg-primary hover:bg-primary-dark"
                   onClick={() => navigate("/pricing")}
                   size="sm"
                 >
