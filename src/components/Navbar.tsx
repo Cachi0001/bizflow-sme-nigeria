@@ -38,6 +38,7 @@ export const Navbar = () => {
 
   const dashboardItems = user ? [
     { name: "Dashboard", path: "/dashboard" },
+    { name: "Products", path: "/products" },
     { name: "Invoices", path: "/invoices" },
     { name: "Expenses", path: "/expenses" },
     { name: "Clients", path: "/clients" },
